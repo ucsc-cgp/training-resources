@@ -1,2 +1,12 @@
 # training-resources
-Training materials for staff and community members
+Training materials for staff and community members/
+
+
+## Suggested Structure of Repo
+Folders organizing these technical concepts
+1) Docker
+2) WDL
+3) AWS
+4) GCP
+5) Other descriptor languages (Snakemake, Galaxy)
+
