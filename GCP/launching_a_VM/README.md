@@ -22,7 +22,7 @@ _The cloud console automatically chooses the most recent project that you used. 
 2. Log in with your UCSC email address
 3. Select the correct project, if necessary
     1. Click the dropdown to select a project<br/>
-    ![select_project.png](https://github.com/ucsc-cgp/training-resources/blob/main/GCP/launching_a_VM/images/select_project.png?raw=true)
+    ![select_project.png](https://github.com/ucsc-cgp/training-resources/blob/main/GCP/launching_a_VM/images/select_project.png?raw=true)<br/>
     2. A pop up will appear, choose **No organization**<br/>
     ![choose_organization.png](https://github.com/ucsc-cgp/training-resources/blob/main/GCP/launching_a_VM/images/choose_organization.png?raw=true)<br/>
     3. Click on the appropriate project
@@ -97,7 +97,6 @@ _Copying or listing files in buckets and VMs utilizes the gsutil and gcloud comm
 	`gcloud auth login`
     2. After executing the command, follow the instructions on the command line (and later in your web browser).
 2. List contents of a bucket (or part of a bucket in this case)
-
     ```
     gsutil -u hpp-ucsc ls \
         gs://fc-4310e737-a388-4a10-8c9e-babe06aaf0cf/working
@@ -107,15 +106,14 @@ _Copying or listing files in buckets and VMs utilizes the gsutil and gcloud comm
 3. Upload a file from your local machine with gcloud scp
     1. Install the Google cloud SDK on your local machine
         1. See [https://cloud.google.com/storage/docs/gsutil_install](https://cloud.google.com/storage/docs/gsutil_install) for instructions 
-	```
-	curl https://sdk.cloud.google.com | bash
-	## Restart shell:
-	exec -l $SHELL
-	## Run gcloud init to initialize the gcloud environment:
-	gcloud init
-	```
+		```
+		curl https://sdk.cloud.google.com | bash
+		## Restart shell:
+		exec -l $SHELL
+		## Run gcloud init to initialize the gcloud environment:
+		gcloud init
+		```
 	    1. Execute the SCP command with gcloud
-
 	        ```
 	        gcloud compute scp \
 	        	--recurse \
