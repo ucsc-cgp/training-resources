@@ -12,10 +12,10 @@ There are thousands of combinations of computers, hardware, and software out the
 Note that this guide is about installing Docker on your actual computer, not an HPC that your computer connects to. Every HPC is different, so we can't provide general guidance on installing on HPCs. In fact, many HPCs do not allow the usage of Docker for security reasons.
 
 ## General requirements
-☑ 64-bit machine (if you're not sure if you have this, [read this article](https://www.computerhope.com/issues/ch001121.htm))
-☑ At least 4 GB of RAM
-☑ At least 10 GB of free disk space
-☑ Root/Admin permissions
+☑ 64-bit machine (if you're not sure if you have this, [read this article](https://www.computerhope.com/issues/ch001121.htm))  
+☑ At least 4 GB of RAM  
+☑ At least 10 GB of free disk space  
+☑ Root/Admin permissions  
 
 It is technically possible to [install Docker on a 32-bit machine](https://stackoverflow.com/questions/37989534/how-to-install-docker-on-32bit-machine-having-ubuntu-12-04) or [without root permissions](https://medium.com/@tonistiigi/experimenting-with-rootless-docker-416c9ad8c0d6), but we don't recommend doing this.
 
