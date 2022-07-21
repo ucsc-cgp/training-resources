@@ -1,12 +1,11 @@
 # The WDL Library
 
-## A resource for those of us who flail a little bit when working with a programming language where you can't just search Stack Overflow to solve every conceivable problem and who like very long subtitles
 
-
-![photo of dog with glasses reading from a stack of books](images/dogwithbooks.jpg "not quite an O'Reily cover but this will do")
+![photo of dog with glasses reading from a stack of books](images/dog_with_books.png "not quite an O'Reily cover but this will do")
 
 
 _Head chef: Ash O'Farrell (UC Santa Cruz)_
+
 
 
 ## Purpose and Intended Audience
@@ -40,19 +39,10 @@ To contribute to this resource, open a pull request in the Github repo.
 
 
 ## Organization
-
 This document is arranged in two sections. **Recipes** are large blocks of code to serve as an example or template of how to do a specific task in WDL. Some of these examples build upon each other, so it may be worth reading this section in order, but all instances are cross-referenced if you prefer to only read what you really need to know. **Tips** are more focused on small pieces of advice, more in the vein of a Stack Overflow post which reminds you that Python is zero-indexed instead of a full framework for using indices to extract elements from an array.
 
-
-## Table of Contents
-
-[TOC]
-
-
-## Recipes {#recipes}
-
-
-### Base cloud resources requested upon size of input files {#base-cloud-resources-requested-upon-size-of-input-files}
+## Recipes
+### Base cloud resources requested upon size of input files
 
 There's no reason to request 100 GB of space from Google if you're just re-aligning a 300 MB cram file to the human genome. Instead of hardcoding a size, it's always better to base the value on the size of one's inputs.
 
@@ -98,10 +88,7 @@ task getReadLengthAndCoverage {
 
 
 
-### Using the scatter() function to perform a task on every X in an array {#using-the-scatter-function-to-perform-a-task-on-every-x-in-an-array}
-
-
-
+### Using the scatter function to perform a task on every X in an array
 * "I want to do something on every file in an array."
 * "I want something like a for loop."
 * "I want to parallelize a process."
@@ -154,7 +141,7 @@ workflow covstats {
 One important way that this differs from iteration is that `scatter` is parallized, while iteration via a for loop is not ([usually](https://stackoverflow.com/questions/29156704/what-is-a-parallel-for-loop-and-how-when-should-it-be-used#:~:text=The%20summing%20for%20loop%20can,such%20as%20separate%20CPU%20cores.)). For instance, let's say you had ten input files, but the second one was invalid in some way. If you were iterating through these files with a standard for loop in Python, then you would error out on that file and the remaining eight would not run. But using `scatter` in WDL is different -- all other instances of the task may complete. As such, `scatter` cannot replace for loops where order matters.
 
 
-### Pass a scattered task's output to a non-scattered task {#pass-a-scattered-task's-output-to-a-non-scattered-task}
+### Pass a scattered task's output to a non-scattered task
 It is relatively easy to pass a scattered task's output to a non-scattered one. Building off the previous recipe, we can call another task in much the same way we pass output from any other task. Note that `call report` is outside the context of scatter.
 
 
@@ -181,7 +168,7 @@ workflow covstats {
 As noted in the previous recipe, each instance of `getReadLengthAndCoverage `returns a float. So, that means that the `report` task will be given an array of floats.
 
 
-### Optional and default inputs with select_first() {#optional-and-default-inputs-with-select_first}
+### Optional and default inputs with select_first
 * "I want to create optional inputs with built-in defaults."
 * "I want the user to be able to specify runtime attributes."
 * "I want the user to be able to specify what Docker container to use."
@@ -239,7 +226,7 @@ task getReadLengthAndCoverage {
 If the user does not define `useLegacyContainer`, then `useLegacyContainer` will be undefined and `select_first()` will evaluate to "false". If the user defines anything for `useLegacyContainer`, then whatever the user defined will be used. Beware, "bad" input will still take precedence; all that `select_first()` is looking at is whether or not something is defined. My task is expecting either "true" or "false" but if the user inputs "fallse" then Cromwell will not fall back to "false".
 
 
-### Call a WDL with another WDL {#call-a-wdl-with-another-wdl}
+### Call a WDL with another WDL
 There are times that you will want to call one WDL file from another. This is most commonly used in checker workflows, which call a workflow with known inputs and compare the outputs with known truth files. Usually, the easiest way to import a WDL into another WDL is to import the raw github URL (it must be the raw version) of the workflow you want to import. This import should go on the very top of your WDL, just under the version number.
 
 ```
@@ -273,12 +260,8 @@ Where `TopMed_aligner` refers to the name used in the import statement and `TopM
 Keep in mind that whenever you call a WDL from another WDL, both of them must be of the [same version of WDL](#wdl-versions). Also keep in mind that it is generally bad security practice to link WDLs to other WDLs outside of the context of checker workflows.
 
 
-## Tips {#tips}
-
-
-### Variables {#variables}
-
-
+## Tips
+### Variables
 #### Variable scope
 
 A lot of issues that pop up when writing WDLs come down to the fact that a WDL can have two different sets of variables in the command section, but when using curly brace notation, they tend to be written in the same way. It is clearer to talk about this using chevron notation, so I'll discuss it in that context. (I recommend always using chevron notation anyway.) 
@@ -306,7 +289,6 @@ task gather {
 
 However, this is easily fixed by just switching the bash variable, defined in the command section, with bash variable notation.
 
-
 ```
 task gather {
     input {
@@ -324,13 +306,14 @@ task gather {
 }
 ```
 
-#### Variables in filenames {#variables-in-filenames}
+#### Variables in filenames
 
 There are two different ways that you should represent a filename with a variable.
 
 In the command part of a WDL, if the variable is an input variable, then it should follow input variable syntax.
 
 ✅samtools index ~{inputBam}
+
 ❌samtools index ${inputBam}
 
 In any other part of a WDL, such as in a task's output section, it can follow bash syntax, even if it is an input variable.
@@ -344,12 +327,11 @@ In any other part of a WDL, such as in a task's output section, it can follow ba
 ❌ File bamIndex = "inputBam.bai"
 
 
-## Command Section Syntax {#command-section-syntax}
-### Be careful with comments {#be-careful-with-comments}
+## Command Section Syntax
+### Be careful with comments
 Because command sections of a WDL can interpret BASH commands, and BASH commands make use of the # symbol, womtool (and possibily other parsers) can misinterpret comments as syntax. This usually only happens if there are special characters in the comment; alphanumerics should work fine.
 
 This will work:
-
 
 ```
 command <<<
@@ -357,19 +339,14 @@ command <<<
 >>>
 ```
 
-
 This will fail womtool: 
-
 
 ```
 command <<< 
     echo foo  # using <<<this syntax>>> for your command section is ~{very cool}! >>>
 ```
 
-
-
-### Chevron syntax {#chevron-syntax}
-
+### Chevron syntax
 The command section of a WDL task can contain valid bash syntax, which often contains {curly braces}. However, the command section of a WDL task can also start with those very braces. In some circumstances the parser has difficulty with this combination, which is why the WDL allows -- and in some cases encourages -- using alternative syntax for the command section. This alternative syntax looks like this:
 
 
@@ -396,8 +373,7 @@ The command section of a WDL task can contain valid bash syntax, which often con
 A surprising number of common errors can be sidestepped by using chevron syntax, so it is worth trying should you have trouble with a command in WDL.
 
 
-## Good Practices {#good-practices}
-
+## Good Practices
 ### Maximize reproducibility by knowing what scripts will be run
 A user putting the same data into your workflow should get the same output as someone else running on the same data. You can ensure this by making sure that's what's actually happening is always the same, or at least, as similar as possible. Some general guidelines to do this:
 * Do not allow users to specify a Docker image
@@ -408,38 +384,25 @@ A user putting the same data into your workflow should get the same output as so
 
 Note that there are exceptions to these guidelines! For example, checker workflows always need to import the workflow they are checking.
 
-### Get familiar with womtool {#get-familiar-with-womtool}
+## Runtime Attributes
+### Allow users to easily change runtime attributes
 
-womtool is Cromwell's built-in syntax validator, but it is also capable of generating a "skeleton" JSON file for a given WDL file, which you can use to quickly create input JSONs for your WDL file. You can read about that and its other uses on [Cromwell's documentation page](https://cromwell.readthedocs.io/en/stable/WOMtool/).
-
-You can download womtool as its own jar file from [the Cromwell release page](https://github.com/broadinstitute/cromwell/releases/). In addition to the features just mentioned, the jar file can also be helpful for validating several WDL files rapidly without having to run them all on Cromwell, as it is the same tool used by Cromwell to validate syntax. When running WDL on the Dockstore CLI, womtool is also involved as the Dockstore CLI calls Cromwell, which contains womtool. Be aware that womtool's validation is checking for valid syntax -- as with all syntax validators it's still possible to have nonfunctional code that is still syntactically correct.
-
-
-## Runtime Attributes {#runtime-attributes}
-
-
-### Allow users to easily change runtime attributes {#allow-users-to-easily-change-runtime-attributes}
-
-A 
-
-<p id="gdcalert3" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: undefined internal link (link text: "recipe in this document"). Did you generate a TOC? </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert4">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-[recipe in this document](#heading=h.o7c022fsuaud) shows how to have the user set the docker container that a task executes in. You can use the same logic to allow the user to specify how much memory a task will use when run on the cloud, for instance, or whether or not preemptibles should be used if running on Google Cloud Compute specifically.
+A [recipe in this document](#heading=h.o7c022fsuaud) shows how to have the user set the docker container that a task executes in. You can use the same logic to allow the user to specify how much memory a task will use when run on the cloud, for instance, or whether or not preemptibles should be used if running on Google Cloud Compute specifically.
 
 It's generally a good idea to give users at least some control over memory and disk size. Also consider giving users the ability to use preemptibles -- your users may want to perform a quick run on downsampled test data, which could be a good use case for preemptibles. Alternatively, your users may consider running your WDL on more data than you've considered, which could preclude preemptibles on a task you'd otherwise consider to run within a reasonable timeframe.
 
 
-### Not all runtime attributes are relevant to all platforms {#not-all-runtime-attributes-are-relevant-to-all-platforms}
+### Not all runtime attributes are relevant to all platforms
 
 Running WDL locally will ignore a WDL's values for runtime attributes that only apply to the cloud. For example, CPU and memory are recognized when running on AWS, GCP, or HCP, but do nothing on other platforms. This means if you have an error in a cloud-platform-only attribute, it will go undetected on your local runs. However, there are a handful of runtime attributes which are valid for both local and all cloud runs, such as `docker`. For a complete list of runtime attributes and how to use them, see [Cromwell's documentation](https://cromwell.readthedocs.io/en/stable/RuntimeAttributes/).
 
 
-### Some runtime attributes act differently on different platforms {#some-runtime-attributes-act-differently-on-different-platforms}
+### Some runtime attributes act differently on different platforms
 
 In addition to not all platforms sharing the same runtime attributes, in some cases the same attribute can mean different things on different platforms. For instance, GCP tends to interpret memory as a minimum, but most HCP systems default to interpreting it as a maximum.
 
 
-### Have some wiggle room for storage {#have-some-wiggle-room-for-storage}
+### Have some wiggle room for storage
 
 When running on any cloud system besides AWS, you can use the disks attribute to request a certain amount of storage. If you are scaling your request disk storage size to the size of your inputs, it's a good idea to add some wiggle room. This is especially important if you know that a file will be reprocessed in some way that creates intermediate files. If you are using `ceil()` [like suggested earlier](#base-cloud-resources-requested-upon-size-of-input-files), you will already be rounding up. But if you run into errors about there not being enough space left, it's worth adding a few extra gigs in your calculation. You may even want to make it a multiple of one of your inputs. For instance, we can adjust the formula from the recipe to make it a multiple of our input cram file. Usually, multiplication of an input like this isn't necessary, but it is worth trying if you are plagued by `no space left on device`.
 
@@ -450,14 +413,14 @@ Int finalDiskSize = refSize + indexSize + (2*thisAmSize)
 This is not relevant to AWS, as AWS EBS autoscales to the necessary size. Storage also does not apply to local runs.
 
 
-### [GCP/Terra Only] Cromwell can handle preemptible interruptions for you {#[gcp-terra-only]-cromwell-can-handle-preemptible-interruptions-for-you}
+### [GCP/Terra Only] Cromwell can handle preemptible interruptions for you
 
 If you include the runtime attribute `preemptible` in your WDL, you can specify the maximum number of times Cromwell will request a [preemptible machine](https://cloud.google.com/compute/docs/instances/preemptible) from Google for a task before defaulting back to a non-preemptible machine. For instance, if your set  `preemptible: 2`, your workflow will attempt a preemptible at first, and if that machine gets preempted, it will try again with a preemptible again, and if that second try is preempted, then it will use a non-preemptible.
 
 Preemptibles are counted separately from `max_retries`, assuming the failure while running on preemptibles is caused by the machine being preempted (as opposed to an error during execution, which would be counted against `max_retries`).
 
 
-### [GCP/Terra Only] Some runtime attributes must use integers and/or strings {#[gcp-terra-only]-some-runtime-attributes-must-use-integers-and-or-strings}
+### [GCP/Terra Only] Some runtime attributes must use integers and/or strings
 
 When running on Google Cloud, the `disk` and `memory` runtime attributes must contain numbers of type int, not float. This is a limitation imposed by Google, not Cromwell.
 
@@ -481,10 +444,10 @@ The [memory runtime attribute](https://cromwell.readthedocs.io/en/stable/Runtime
 * memory: "4000 MB"
 
 
-## Different versions of WDL {#different-versions-of-wdl}
+## Different versions of WDL
 
 
-### WDL versions {#wdl-versions}
+### WDL versions
 
 There are multiple different versions of WDL. In general, most users will want to use WDL 1.0 formatting. To support older WDLs, Dockstore will accept valid WDLs that follow a draft specification. The development version is not officially supported by Dockstore and it is unknown if it passes Dockstore's version (41) of womtool. Versioning is performed in the first line of your WDL and is written in plaintext, such as
 
@@ -499,7 +462,7 @@ Per [the official WDL spec](https://github.com/openwdl/wdl/blob/main/versions/1.
 All WDL files within a given workflow must use the same version of WDL. If a WDL with "version 1.0" at the top (which will be parsed as 1.0) tries to call a WDL without an explicit version number (which will be parsed as draft-2), the process will fail even if the contents of the files otherwise should be compatible.
 
 
-### Some functions have changed in in WDL 1.0 {#some-functions-have-changed-in-in-wdl-1-0}
+### Some functions have changed in in WDL 1.0
 
 As you might expect, certain functions work differently or are removed altogether in different versions of WDL. One that is worth notice is sub(), as it was sometimes used in draft versions to coerce floats into integers. This is valid in draft-2, so if your WDL does not specify `version 1.0` at the top, the following would be valid:
 
@@ -512,23 +475,20 @@ disks: "local-disk " + sub(disk_size, "\\..*", "") + " HDD"
 However, this is invalid in WDL 1.0 where it will not even pass womtool. It is better to use `ceil()` to coerce floats into integers, as shown in [this recipe](#base-cloud-resources-requested-upon-size-of-input-files).
 
 
-## Miscellaneous {#miscellaneous}
+## Miscellaneous
 
 
-### Use pipefail to catch errors early {#use-pipefail-to-catch-errors-early}
-
+### Use pipefail to catch errors early
 Towards the beginning of a command section within a task, it's good practice to include the following:
-
 
 ```
 set -eux -o pipefail
 ```
 
-
 Among [other things](https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/), this will make sure that your pipeline fails whenever a task returns something that isn't 0. This can be helpful if you have a long task that you don't wish to continue should something fail upstream. It can also catch more rare situations where a failure does not return 1, such as if you are running something in Golang. Remembering to set this will prevent errors from escaping your notice, or falsely seeming to succeed only to cause other errors later down the line.
 
 
-### User-set inputs should be defined thrice {#user-set-inputs-should-be-defined-thrice}
+### User-set inputs should be defined thrice
 
 When it comes to inputs that the user directly passes in at the start of a workflow, it can be helpful to remember the "rule of three." Inputs should be defined as a workflow input and a task input, plus in the workflow call section, for a total of three.
 
@@ -548,31 +508,34 @@ workflow indexABam {
 }
 ```
 
-### Know the quirks of your workflows {#know-the-quirks-of-your-workflows}
+### Know the quirks of your workflows
 
 The more you know about what you are WDLizing, the easier and more foolproof the process will be. For instance, if you know what you are trying to WDLize will reindex an input file (such as cram) if you do not also include an index file (such as crai), you will likely want to account for slightly more disk space to allow for that indexing to occur. If, on the other hand, you know that your tool will fail later on down the line if no index file is provided, then you can ensure that the user includes the index by making them non-optional, allowing the workflow to exit quickly rather than fail after spending time and money on previous steps.
 
 
-### Keep the purpose and scope of WDL in mind {#keep-the-purpose-and-scope-of-wdl-in-mind}
+### Keep the purpose and scope of WDL in mind
 
 If you are new to writing workflows, it is worth keeping in mind that **WDL is designed to run a series of commands, not be a stand-alone programming language in its own right**. If you are struggling to do something in WDL, it is worth taking a step back and thinking if it can be done with its own tasks. For instance, you may find it easier to parse your output as a task in WDL that calls upon a parsing script rather than trying to manipulate outputs within a workflow description section.
 
 
-### Scattered tasks do not share allocated resources {#scattered-tasks-do-not-share-allocated-resources}
+### Scattered tasks do not share allocated resources
 
 Every instance of a scattered task is given the resources allocated to it in the task section of your WDL.
 
 Let's say you are running an analysis on GCP, which makes use of the `memory` runtime attribute, and as an input you pass in an array of three files. You run a scattered task on this array, creating three instances of that task. In your WDL, you gave that task a runtime attribute of 15 GB of memory. Every instance of that task will be given 15 GB of memory, rather than each instance being allocated 5 GB of memory.
 
+### Get familiar with womtool
+womtool is Cromwell's built-in syntax validator, but it is also capable of generating a "skeleton" JSON file for a given WDL file, which you can use to quickly create input JSONs for your WDL file. You can read about that and its other uses on [Cromwell's documentation page](https://cromwell.readthedocs.io/en/stable/WOMtool/).
+
+You can download womtool as its own jar file from [the Cromwell release page](https://github.com/broadinstitute/cromwell/releases/). In addition to the features just mentioned, the jar file can also be helpful for validating several WDL files rapidly without having to run them all on Cromwell, as it is the same tool used by Cromwell to validate syntax. When running WDL on the Dockstore CLI, womtool is also involved as the Dockstore CLI calls Cromwell, which contains womtool. Be aware that womtool's validation is checking for valid syntax -- as with all syntax validators it's still possible to have nonfunctional code that is still syntactically correct.
+
 ### Try a new WDL executor
 Cromwell is what's used by Terra, but it isn't the only executor out there. If you would like something Python-based and/or less verbose, you may want to try [miniwdl](https://github.com/chanzuckerberg/miniwdl).
 
+## Terra-specific Tips
 
-## Terra-specific Tips {#terra-specific-tips}
-
-### General data access issues on Terra {#general-data-access-issues-on-terra}
-
-#### Using DRS URIs {#using-drs-uris}
+### General data access issues on Terra
+#### Using DRS URIs
 
 DRS is a GA4GH standard providing a cloud-agnostic method to access data in the cloud. For NIH cloud platform users (BioData Catalyst, AnVIL, etc.), it is currently used to access data hosted by the Gen3 platform. When data is imported to Terra from Gen3, you will see that genomic files are accessed via "drs://" (rather than "gs://").
 
@@ -599,12 +562,12 @@ gs://topmed_workflow_testing/topmed_aligner/reference_files/hg38/hs38DH.fa
 ```
 
 
-#### Make sure your credentials are current {#make-sure-your-credentials-are-current}
+#### Make sure your credentials are current
 
 If you are having issues accessing controlled-access data on Terra, try refreshing your credentials. See Terra support on [linking Terra to external services](https://support.terra.bio/hc/en-us/articles/360038086332).
 
 
-### Extract the WDL used on a Terra run to your local machine {#extract-the-wdl-used-on-a-terra-run-to-your-local-machine}
+### Extract the WDL used on a Terra run to your local machine
 
 _Note: While this has been made somewhat obsolete by a change in Terra's UI, it may still be useful to power users who wish to check multiple submission's WDLs quickly, or if you wish to recover a WDL from a Terra run (such as if you deleted your local copy)._
 
@@ -618,11 +581,9 @@ When you click the "view" button to bring up the job manager, take note of the I
 
 You can use this ID on your local machine's command line to display the WDL on stdout.
 
-
 ```
 curl -X GET "https://api.firecloud.org/api/workflows/v1/PUT-WORKFLOW-ID-HERE/metadata" -H "accept: application/json" -H "Authorization: Bearer $(gcloud auth print-access-token)" | jq -r '.submittedFiles.workflow'
 ```
-
 
 Note that you will need to [install gcloud and login with the same Google account that your workspace uses](https://cloud.google.com/sdk/docs/quickstarts), and you will need jq to parse the result. jq can be easily installed on Mac with `brew install jq`
 
