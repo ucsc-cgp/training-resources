@@ -479,7 +479,7 @@ The [memory runtime attribute](https://cromwell.readthedocs.io/en/stable/Runtime
 * memory: "4000 MB"
 
 ## Different versions of WDL
-There are multiple different versions of WDL. In general, most users will want to use WDL 1.0 formatting. To support older WDLs, Dockstore will accept valid WDLs that follow a draft specification. The development version is not officially supported by Dockstore and it is unknown if it passes Dockstore's version (41) of womtool. Versioning is performed in the first line of your WDL and is written in plaintext, such as
+There are multiple different versions of WDL. **In general, most users will want to use WDL 1.0 formatting.** To support older WDLs, Cromwell (and by extension the Dockstore CLI) will accept valid WDLs that follow a draft specification. Versioning is performed in the first line of your WDL and is written in plaintext, such as
 
 ```
 version 1.0
@@ -498,7 +498,6 @@ disks: "local-disk " + sub(disk_size, "\\..*", "") + " HDD"
 ```
 
 However, this is invalid in WDL 1.0 where it will not even pass womtool. It is better to use `ceil()` to coerce floats into integers, as shown in [this recipe](#base-cloud-resources-requested-upon-size-of-input-files).
-
 
 ### Cromwell lags behind the current WDL spec
 According to its git history, the WDL 1.1 spec was finalized around February 2021. As of my writing this (mid-July 2022), to my knowledge, Cromwell does not support WDL 1.1 nor is there a public roadmap for it picking up WDL 1.1 support. If you are writing a WDL for Terra, **do not** use WDL 1.1 features. If you are writing a workflow that must use a WDL 1.1 feature, consider using a different WDL executor which does support WDL 1.1, or asking on Stack Overflow or elsewhere for advice on creating a WDL 1.0-compatiable workaround.
@@ -535,7 +534,6 @@ workflow indexABam {
 ```
 
 ### Know the quirks of your workflows
-
 The more you know about what you are WDLizing, the easier and more foolproof the process will be. For instance, if you know what you are trying to WDLize will reindex an input file (such as cram) if you do not also include an index file (such as crai), you will likely want to account for slightly more disk space to allow for that indexing to occur. If, on the other hand, you know that your tool will fail later on down the line if no index file is provided, then you can ensure that the user includes the index by making them non-optional, allowing the workflow to exit quickly rather than fail after spending time and money on previous steps.
 
 
