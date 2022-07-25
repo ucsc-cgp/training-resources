@@ -158,61 +158,96 @@ As noted in the previous recipe, each instance of `getReadLengthAndCoverage `ret
 
 ### Optional and default inputs with select_first
 * "I want to create optional inputs with built-in defaults."
-* "I want the user to be able to specify runtime attributes."
-* "I want the user to be able to specify what Docker container to use."
 
- \
-`select_first()` takes two arguments, the first one being a variable, the second being a value. If and only if the variable is not defined, `select_first() `will evaluate to the second argument. If the variable is defined, then it will evaluate to that variable. Let's take another look at [the scatter example from earlier on in this document](#using-the-scatter-function-to-perform-a-task-on-every-x-in-an-array), but add in another argument. This time, we want to provide the user a choice as to which Docker container to use in a WDL task. (Note: 99% of the time, allowing the user to choose which Docker image to use is a bad idea because it makes reproducibility harder, but there are some edge cases where this is acceptable.)
-
+`select_first()` takes two arguments, the first one being a variable, the second being a value. If and only if the variable is not defined, `select_first()` will evaluate to the second argument. If the variable is defined, then it will evaluate to that variable. Let's take another look at [the scatter example from earlier on in this document](#using-the-scatter-function-to-perform-a-task-on-every-x-in-an-array), but add in another argument. This argument has the purpose of echoing the user's favorite animal. Why not?
 
 ```
 workflow covstats {
 	input {
 		Array[File] inputBamsOrCrams
-		String? useLegacyContainer
+		String? favoriteAnimal
 	}
-	# Figure out which Docker to use
-	String toUse = select_first([useLegacyContainer, "false"])
+	# Figure out which animal to use, fall back to dogs if none specified
+	String animal = select_first([favoriteAnimal, "dog"])
 
 	# Call covstats
 	scatter(oneBamOrCram in inputBamsOrCrams) {
 		call getReadLengthAndCoverage as scatteredGetStats { 
 			input:
 				inputBamOrCram = oneBamOrCram,
-				toUse = toUse
+				animal = animal
 		}
 	}
 }
 ```
 
-
-Now, let's update our task to include toUse as an input that changes the Docker container. The change goes in the runtime portion, as well as adding a new input.
-
+Now, let's update our task to include `animal` as an input.
 
 ```
 task getReadLengthAndCoverage {
 	input {
 		File inputBamOrCram
-		String toUse
+		String animal
 	}
 	command <<<
 		goleft covstats -f ~{refGenome} ~{inputBamOrCram} >> this.txt
 		COVOUT=$(tail -n +2 this.txt)
 		read -a COVARRAY <<< "$COVOUT"
 		echo ${COVARRAY[0]} > thisCoverage
+
+		echo ~{animal}
 	>>>
 	output {
 		Int outCoverage = read_float("thisCoverage")
 	}
-	runtime {
-		docker: if toUse == "true" then "quay.io/biocontainers/goleft:0.2.0--0" else "quay.io/aofarrel/goleft-covstats:circleci-push"
-	}
 }
 ```
 
+If the user does not define `animal`, then `animal` will be undefined and `select_first()` will evaluate to "dog". If the user defines anything for `animal`, then whatever the user defined will be used. Beware, "bad" input will still take precedence; all that `select_first()` is looking at is whether or not something is defined!
 
-If the user does not define `useLegacyContainer`, then `useLegacyContainer` will be undefined and `select_first()` will evaluate to "false". If the user defines anything for `useLegacyContainer`, then whatever the user defined will be used. Beware, "bad" input will still take precedence; all that `select_first()` is looking at is whether or not something is defined. My task is expecting either "true" or "false" but if the user inputs "fallse" then Cromwell will not fall back to "false".
 
+### Using if/else in WDL
+WDL allows for limited if/else reasoning when it comes to setting variables. You can use this to set runtime arguments in tasks, such as this:
+
+```
+runtime {
+	disk: if howBigShouldDiskSizeBe == "very big" then "local-disk 400000 SSD" else "local-disk 10 SSD"
+}
+```
+
+You can also use if statements to optionally call certain tasks. For example, if the user sets check_gds to `true`, then the check_gds_files task will be called. If not, the check_gds_files task will not be called. Because the actual workflow output is derived from the vcf2gds task, which will always run regardless of what `check_gds` is set to, `vcf2gds.gds_output` will always be defined (provided vcf2gds has an output called `gds_output` of course), so the workflow level output will always be valid.
+
+```
+workflow vcftogds {
+	input {
+		Array[File] vcf_files
+		Boolean check_gds = false
+	}
+
+	scatter(vcf_file in vcf_files) {
+		call vcf2gds {
+			input:
+				vcf = vcf_file
+		}
+	}
+
+	if(check_gds) {
+		scatter(gds in vcf2gds.gds_output) {
+			call check_gds_files {
+				input:
+					gds = gds
+			}
+		}
+	}
+
+	output {
+		Array[File] gdss = vcf2gds.gds_output
+	}
+}
+```
+What's the point of a workflow like this if the workflow-level output isn't influenced by check_gds_files? It doesn't need to be. If check_gds_files finds something wrong, it can simply throw an error, resulting in the workflow failing. More detailed results could be gleaned from log files from check_gds_files. Remember, if a workflow fails, task-level outputs are also saved.
+
+However, you cannot use else statements in this maybe-run-a-task-maybe-not manner. WDL lacks an "else" keyword for anything besides setting a variable's value. Also, WDL executors generally cannot tell if two if statements are mutually exclusive.
 
 ### Call a WDL with another WDL
 There are times that you will want to call one WDL file from another. This is most commonly used in checker workflows, which call a workflow with known inputs and compare the outputs with known truth files. Usually, the easiest way to import a WDL into another WDL is to import the raw github URL (it must be the raw version) of the workflow you want to import. This import should go on the very top of your WDL, just under the version number.
