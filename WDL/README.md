@@ -353,10 +353,12 @@ This will fail womtool:
 
 ```
 command <<< 
-    echo foo  # using <<<this syntax>>> for your command section is ~{very cool}! >>>
+    echo foo  # using <<<this syntax>>> for your command section is ~{very cool}!
+>>>
 ```
 
 ### Chevron syntax
+*Note: To use this kind of syntax, you must be using WDL 1.0 or later -- see [here](https://github.com/aofarrel/training-resources/blob/wdl-library/WDL/README.md#different-versions-of-wdl) for guidelines on WDL versions*  
 The command section of a WDL task can contain valid bash syntax, which often contains {curly braces}. However, the command section of a WDL task can also start with those very braces. In some circumstances the parser has difficulty with this combination, which is why the WDL allows -- and in some cases encourages -- using alternative syntax for the command section. This alternative syntax looks like this:
 
 
