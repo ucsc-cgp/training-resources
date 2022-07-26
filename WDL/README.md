@@ -36,45 +36,33 @@ To contribute to this resource, open a pull request in the Github repo.
 ## Recipes
 ### Base cloud resources requested upon size of input files
 
-There's no reason to request 100 GB of space from Google if you're just re-aligning a 300 MB cram file to the human genome. Instead of hardcoding a size, it's always better to base the value on the size of one's inputs.
+There's no reason to request 100 GB of space from Google if you're just re-aligning a 300 MB cram file to the human genome. Instead of hardcoding a size for your tasks, it's always better to base the value on the size of one's inputs.
 
-However, this is problematic -- size() returns a float, but the disk runtime attribute must be an integer, and at first glance it may appear that WDL lacks a way to directly coerce floats into integers. While you could use some clever tricks involving strings to get around this, it's far easier and less error-prone to simply round up.
+However, this is problematic -- `size()` returns a float, but the disk runtime attribute must be an integer, and at first glance it may appear that WDL lacks a way to directly coerce floats into integers. While you could use some clever tricks involving strings to get around this, it's far easier and less error-prone to simply round up floats into integers using `ceil()`.
 
-Here's an example of using ceil() to round up the size of your inputs, then adding them together to generate a final value for disk size.
-
+Here's an example of using `ceil()` to round up the size of your inputs, then adding them together to generate a final value for disk size. The user can also specify a bigger value than 1 for `addl_disk` to add even more disk space on top.
 
 ```
-task getReadLengthAndCoverage {
+task aggregate_list {
 	input {
-		File inputBamOrCram
-		Array[File] allInputIndexes
-		File? refGenome
+		File some_big_file
+		File some_other_file
+		Int addl_disk = 1
 	}
 
-	command <<<
-		set -eux -o pipefail
+	Int big_size = ceil(size(some_big_file, "GB"))
+	Int other_size = ceil(size(some_big_file, "GB"))
+	Int final_disk_size = big_size + other_size + addl_disk
 
-		if [ -f ~{inputBamOrCram} ]; then
-				echo "Input bam or cram file exists"
-		else 
-				>&2 echo "Input ~{inputBamOrCram} not found, panic"
-				exit 1
-		fi
+	command <<<
+		echo "foo"
 	>>>
 
-	# Note that this is performed outside of the command section!
-	Int refSize = ceil(size(refGenome, "GB"))
-	Int indexSize = ceil(size(allInputIndexes, "GB"))
-	Int thisAmSize = ceil(size(inputBamOrCram, "GB"))
-	Int finalDiskSize = refSize + indexSize + thisAmSize
-
 	runtime {
-		disks: "local-disk " + finalDiskSize + " HDD"
+		disks: "local-disk " + final_disk_size + " HDD"
 	}
 }
 ```
-
-
 
 ### Using the scatter function to perform a task on every X in an array
 * "I want to do something on every file in an array."
