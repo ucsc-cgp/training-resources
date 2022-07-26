@@ -326,15 +326,15 @@ There are two different ways that you should represent a filename with a variabl
 
 In the command part of a WDL, if the variable is an input variable, then it should follow input variable syntax.
 
-✅samtools index ~{inputBam}
-❌samtools index ${inputBam}
+✅samtools index ~{inputBam}  
+❌samtools index ${inputBam}  
 
 In any other part of a WDL, such as in a task's output section, it can follow bash syntax, even if it is an input variable.
 
-✅ File bamIndex = "${inputBam}.bai"
-❌ File bamIndex = "$inputBam.bai"
-❌ File bamIndex = "$(inputBam).bai"
-❌ File bamIndex = "inputBam.bai"
+✅ File bamIndex = "${inputBam}.bai"  
+❌ File bamIndex = "$inputBam.bai"  
+❌ File bamIndex = "$(inputBam).bai"  
+❌ File bamIndex = "inputBam.bai"  
 
 
 ## Command Section Syntax
