@@ -241,7 +241,43 @@ workflow vcftogds {
 ```
 What's the point of a workflow like this if the workflow-level output isn't influenced by check_gds_files? It doesn't need to be. If check_gds_files finds something wrong, it can simply throw an error, resulting in the workflow failing. More detailed results could be gleaned from log files from check_gds_files. Remember, if a workflow fails, task-level outputs are also saved.
 
+This sort of if statement doesn't just have to be a boolean. In this example, the merge and check merged tasks are only called if more than one input file is put in by the user. The user does not directly set `num_gds_files`, but `num_gds_files` is calculated based on `gds_files`, which the user does set.
+
+```
+workflow ldpruning {
+	input {
+		Array[File] gds_files
+	}
+
+	Int num_gds_files = length(gds_files)
+
+	scatter(gds_file in gds_files) {
+		call prune {
+			input:
+				gds_file = gds_file
+		}
+	}
+
+	if (num_gds_files > 1) {
+		call merge_gds {
+			input:
+				gdss = prune.pruned_output
+		}
+		
+		scatter(pruned_gds in prune.pruned_output) {
+			call check_merged_gds {
+				input:
+					gds_file = pruned_gds,
+					merged_gds_file = merge_gds.merged_gds_output
+
+			}
+		}
+	}
+}
+```
+
 However, you cannot use else statements in this maybe-run-a-task-maybe-not manner. WDL lacks an "else" keyword for anything besides setting a variable's value. Also, WDL executors generally cannot tell if two if statements are mutually exclusive.
+
 
 ### Call a WDL with another WDL
 There are times that you will want to call one WDL file from another. This is most commonly used in checker workflows, which call a workflow with known inputs and compare the outputs with known truth files. Usually, the easiest way to import a WDL into another WDL is to import the raw github URL (it must be the raw version) of the workflow you want to import. This import should go on the very top of your WDL, just under the version number.
@@ -280,8 +316,7 @@ Keep in mind that whenever you call a WDL from another WDL, both of them must be
 ## Tips
 ### Variables
 #### Variable scope
-
-A lot of issues that pop up when writing WDLs come down to the fact that a WDL can have two different sets of variables in the command section, but when using curly brace notation, they tend to be written in the same way. It is clearer to talk about this using chevron notation, so I'll discuss it in that context. (I recommend always using chevron notation anyway.) 
+A lot of issues that pop up when writing WDLs come down to the fact that a WDL can have two-and-a-half different sets of variables in the command section, but when using curly brace notation, they tend to be written in the same way. It is clearer to talk about this using chevron notation, so I'll discuss it in that context. (I recommend always using chevron notation anyway.) 
 
 When using chevron notation for a command section, an input variable is written ~{likeThis}. This is different from a bash variable, which is usually written $likeThis. **An input variable must be defined in the input section of a task section. A bash (or whatever language you are using) variable must be defined in the command section itself.**
 
