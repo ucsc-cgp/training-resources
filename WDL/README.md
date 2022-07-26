@@ -39,6 +39,12 @@ To contribute to this resource, open a pull request in the GitHub repo.
 * [Understanding and controlling cloud costs](https://support.terra.bio/hc/en-us/articles/360029748111-Understanding-and-controlling-cloud-costs-)
 
 
+## Versioning, "is this document current?", etc
+Unless otherwise specified, all examples in this document are using WDL 1.0 syntax.
+
+Examples in this document were checked using version 1.12.0 of the Dockstore CLI, which uses Cromwell version 57, in July 2022. It's possible something slipped by me, so open a PR if something seems incorrect.
+
+
 # Recipes
 ## How to scale cloud resources with size of input files
 There's no reason to request 100 GB of space from Google if you're just re-aligning a 300 MB cram file to the human genome. Instead of hardcoding a size for your tasks, it's always better to base the value on the size of one's inputs.
