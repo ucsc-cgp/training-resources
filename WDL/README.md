@@ -18,7 +18,7 @@ This document is arranged in two sections. **Recipes** are large blocks of code 
 
 
 ## Contribution
-To contribute to this resource, open a pull request in the Github repo.
+To contribute to this resource, open a pull request in the GitHub repo.
 
 
 ## Helpful External Resources
@@ -316,47 +316,56 @@ Keep in mind that whenever you call a WDL from another WDL, both of them must be
 ## Tips
 ### Variables
 #### Variable scope
-A lot of issues that pop up when writing WDLs come down to the fact that a WDL can have two-and-a-half different sets of variables in the command section, but when using curly brace notation, they tend to be written in the same way. It is clearer to talk about this using chevron notation, so I'll discuss it in that context. (I recommend always using chevron notation anyway.) 
+A lot of issues that pop up when writing WDLs come down to the fact that a WDL involves many different sets of variables, and they are often written similarly. It is clearer to talk about this using chevron notation for task sections, so I'll discuss it in that context. (I recommend always using chevron notation anyway.) 
 
-When using chevron notation for a command section, an input variable is written ~{likeThis}. This is different from a bash variable, which is usually written $likeThis. **An input variable must be defined in the input section of a task section. A bash (or whatever language you are using) variable must be defined in the command section itself.**
+*Note: WDL does not use phrases like "private task-level input variable" or any of the other names I am about to introduce on their spec. The 1.0 spec does not even have any hits for "private" if you search the document. In other words, there are no official name for these different kinds of variables. I am giving them names in hopes of making them easier to understand.*
 
-For example, the following will NOT work, because ~{readLengthFiles_string} is not defined as an input in the input section.
+When using chevron notation for a command section, an input variable is written `~{likeThis}`. This is different from a bash variable, which is usually written `${likeThis}`. Let's take a look at an example.
 
 ```
-task gather {
+version 1.0
+
+task look_at_all_those_chickens {
     input {
-        Array[File] readLengthFiles
+        String chickens
     }
 
     command <<<
-        readLengthFilesCopy = ~{readLengthFiles}
-        echo ~{readLengthFilesCopy} >> out.txt
+        chickenscopy = "~{chickens}"
+        echo ${chickenscopy} >> out.txt
     >>>
 
     output {
-        File out = "out.txt"
+        String out = read_string("out.txt")
     }
+}
+
+workflow variable_examples {
+	input {
+		String birds
+	}
+
+	call look_at_all_those_chickens {
+		input:
+			chickens = birds
+	}
 }
 ```
 
-However, this is easily fixed by just switching the bash variable, defined in the command section, with bash variable notation.
+When running the workflow, the user needs to provide an array of strings for the workflow-level input variable `birds`. This variable is called as `chickens` in the `look_at_all_those_chickens` task. By setting the value of `birds`, the user is indirectly setting the value of `chickens`, because `chickens` equals `birds`. I call `birds` a *workflow-level input variable* and `chickens` a *task-level input variable*.
 
-```
-task gather {
-    input {
-        Array[File] readLengthFiles
-    }
+In the `look_at_all_those_chickens` task's command section, we want to access the `chickens` variable. Because we are using chevron notation, we do so using a tilde and curly braces, resulting in `~{chickens}`. In that same line, we are creating a new variable, `chickenscopy`, to the value of `~{chicken}`. `chickenscopy` is only defined in the command section of a task, and by default, the command section of a task is written in bash. Therefore, `chickenscopy` is a bash variable. To access this bash variable in the next line, we use a dollar sign and curly braces, resulting in `${chickenscopy}` as our syntax. This is visually distinct from `~{chickens}`, which was defined outside this bash section, but can be referenced inside of it, because it is a task-level input variable. However, **we cannot access `${chickenscopy}` outside of this task's command section.** This can be quite a headache when trying to get outputs in WDL, which is why it is common to write outputs to a file and then leverage WDL's [read_string()](https://github.com/openwdl/wdl/blob/main/versions/1.0/SPEC.md#string-read_stringstringfile) or [read_int()](https://github.com/openwdl/wdl/blob/main/versions/1.0/SPEC.md#int-read_intstringfile) in a task's outputs section. That's what we're doing here. We cannot access `${chickenscopy}` directly, but we can access the contents of any file on the disk, so we can just create a file that has the contents of `${chickenscopy}`, then read that as a string. We set that as a *task-level output variable* called `out`.
 
-    command <<<
-        readLengthFilesCopy = ~{readLengthFiles}
-        echo ${readLengthFilesCopy} >> out.txt
-    >>>
 
-    output {
-        File out = "out.txt"
-    }
-}
-```
+
+So far we have:
+* Workflow-level input variable `birds`  
+* Task-level input variable `chickens`  
+* A bash variable named `chickenscopy`  
+
+There is still one 
+
+
 
 #### Variables in filenames
 
