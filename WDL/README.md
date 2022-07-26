@@ -64,6 +64,9 @@ task aggregate_list {
 }
 ```
 
+You'll notice `big_size`, `other_size`, and `final_disk_size` are not defined in the input section, but it exists outside the command section too. When a variable is defined in this way, it is evaluated after the input variables are evaluated, but before the command section starts. They also cannot be accessed by the user. This means that someone running this workflow on Terra will have the option to define `some_big_file`, `some_other_file`, and `addl_disk`, but not `big_size`, `other_size`, and `final_disk_size`. In other words, `big_size`, `other_size`, and `final_disk_size` act somewhat like private variables. This can be useful, because it stops users from accidentally overwriting them with incorrect values.
+
+
 ### Using the scatter function to perform a task on every X in an array
 * "I want to do something on every file in an array."
 * "I want something like a for loop."
