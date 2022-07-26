@@ -39,8 +39,8 @@ To contribute to this resource, open a pull request in the GitHub repo.
 * [Understanding and controlling cloud costs](https://support.terra.bio/hc/en-us/articles/360029748111-Understanding-and-controlling-cloud-costs-)
 
 
-## Recipes
-### Base cloud resources requested upon size of input files
+# Recipes
+## How to scale cloud resources with size of input files
 There's no reason to request 100 GB of space from Google if you're just re-aligning a 300 MB cram file to the human genome. Instead of hardcoding a size for your tasks, it's always better to base the value on the size of one's inputs.
 
 However, this is problematic -- `size()` returns a float, but the disk runtime attribute must be an integer, and at first glance it may appear that WDL lacks a way to directly coerce floats into integers. While you could use some clever tricks involving strings to get around this, it's far easier and less error-prone to simply round up floats into integers using `ceil()`.
@@ -72,7 +72,7 @@ task aggregate_list {
 You'll notice `big_size`, `other_size`, and `final_disk_size` are not defined in the input section, but it exists outside the command section too. When a variable is defined in this way, it is evaluated after the input variables are evaluated, but before the command section starts. They also cannot be accessed by the user. This means that someone running this workflow on Terra will have the option to define `some_big_file`, `some_other_file`, and `addl_disk`, but not `big_size`, `other_size`, and `final_disk_size`. In other words, `big_size`, `other_size`, and `final_disk_size` act somewhat like private variables. This can be useful, because it stops users from accidentally overwriting them with incorrect values.
 
 
-### Using the scatter function to perform a task on every X in an array
+## How to use `scatter` to do a task on every object in an array
 * "I want to do something on every file in an array."
 * "I want something like a for loop."
 * "I want to parallelize a process."
@@ -125,7 +125,7 @@ workflow covstats {
 One important way that this differs from iteration is that `scatter` is parallized, while iteration via a for loop is not ([usually](https://stackoverflow.com/questions/29156704/what-is-a-parallel-for-loop-and-how-when-should-it-be-used#:~:text=The%20summing%20for%20loop%20can,such%20as%20separate%20CPU%20cores.)). For instance, let's say you had ten input files, but the second one was invalid in some way. If you were iterating through these files with a standard for loop in Python, then you would error out on that file and the remaining eight would not run. But using `scatter` in WDL is different -- all other instances of the task may complete. As such, `scatter` cannot replace for loops where order matters.
 
 
-### Pass a scattered task's output to a non-scattered task
+## How to pass a scattered task's output to a non-scattered task
 It is relatively easy to pass a scattered task's output to a non-scattered one. Building off the previous recipe, we can call another task in much the same way we pass output from any other task. Note that `call report` is outside the context of scatter.
 
 
@@ -152,10 +152,19 @@ workflow covstats {
 As noted in the previous recipe, each instance of `getReadLengthAndCoverage `returns a float. So, that means that the `report` task will be given an array of floats.
 
 
-### Optional and default inputs with select_first
+## How to use optional and default inputs with select_first
 * "I want to create optional inputs with built-in defaults."
+* "I want to fall back on a known value (or another variable) if a variable is not defined"
 
-`select_first()` takes two arguments, the first one being a variable, the second being a value. If and only if the variable is not defined, `select_first()` will evaluate to the second argument. If the variable is defined, then it will evaluate to that variable. Let's take another look at [the scatter example from earlier on in this document](#using-the-scatter-function-to-perform-a-task-on-every-x-in-an-array), but add in another argument. This argument has the purpose of echoing the user's favorite animal. Why not?
+We can use select_first() for these purposes. But before we go any further, a word of caution: It is a very common mistake is to use select_first() with the wrong syntax. It should be written as an array...
+
+`select_first([optional_variable, "foo"])`
+
+...not as a function with two arguments, such as `select_first(optional_variable, "foo")`.
+
+Now that we got that sorted, let's actually use it. As stated before, select_first() takes in a single array. Usually, that array has only two components, the first one being a variable, the second being a value. If and only if the first variable is not defined, select_first() will evaluate to the second thing in the array. If the variable is defined, then it will evaluate to that variable.
+
+Let's take another look at [the scatter example from earlier on in this document](#using-the-scatter-function-to-perform-a-task-on-every-x-in-an-array), but add in another argument. This argument has the purpose of echoing the user's favorite animal.
 
 ```
 workflow covstats {
@@ -199,10 +208,10 @@ task getReadLengthAndCoverage {
 }
 ```
 
-If the user does not define `animal`, then `animal` will be undefined and `select_first()` will evaluate to "dog". If the user defines anything for `animal`, then whatever the user defined will be used. Beware, "bad" input will still take precedence; all that `select_first()` is looking at is whether or not something is defined!
+If the user does not define `animal`, then `animal` will be undefined and `select_first()` will evaluate to "dog". If the user defines anything for `animal`, then whatever the user defined will be used. Beware, "bad" input will still take precedence; all that select_first() is looking at is whether or not something is defined!
 
 
-### Using if/else in WDL
+## How to use if/else in WDL
 WDL allows for limited if/else reasoning when it comes to setting variables. You can use this to set runtime arguments in tasks, such as this:
 
 ```
@@ -281,7 +290,7 @@ workflow ldpruning {
 However, you cannot use else statements in this maybe-run-a-task-maybe-not manner. WDL lacks an "else" keyword for anything besides setting a variable's value. Also, WDL executors generally cannot tell if two if statements are mutually exclusive.
 
 
-### Call a WDL with another WDL
+## How to call a WDL with another WDL
 There are times that you will want to call one WDL file from another. This is most commonly used in checker workflows, which call a workflow with known inputs and compare the outputs with known truth files. Usually, the easiest way to import a WDL into another WDL is to import the raw github URL (it must be the raw version) of the workflow you want to import. This import should go on the very top of your WDL, just under the version number.
 
 ```
@@ -314,8 +323,8 @@ Where `TopMed_aligner` refers to the name used in the import statement and `TopM
 
 Keep in mind that whenever you call a WDL from another WDL, both of them must be of the [same version of WDL](#wdl-versions). Also keep in mind that it is generally bad security practice to link WDLs to other WDLs outside of the context of checker workflows.
 
-## Lessons
-### Runtime Attributes
+# Lessons
+## Runtime attributes
 Runtime attributes are defined in the runtime section of a WDL section. The WDL 1.0 spec only defines two runtime attributes, `docker` and `memory`. All other runtime attributes are at the whims of the WDL executor you are using.
 
 * [Cromwell runtime attributes](https://cromwell.readthedocs.io/en/stable/RuntimeAttributes/)
@@ -331,7 +340,7 @@ Regardless of which executor you are using, `docker` should be written as a stri
 
 The `docker` attribute is a little bit pickier. It should be written the same way you would write a `docker pull` command. For example, if you want to use the latest ubuntu image from Docker Hub, you can set `docker: "ubuntu:latest"` while if you wanted [this quay.io copy of bamstats](https://quay.io/repository/collaboratory/dockstore-tool-bamstats), you would use `docker: docker pull quay.io/repository/collaboratory/dockstore-tool-bamstats` in your runtime section.
 
-### Best practices for reproducibility
+## Best practices for reproducibility
 A user putting the same data into your workflow should get the same output as someone else running on the same data. You can ensure this by making sure that's what's actually happening is always the same, or at least, as similar as possible. Some general guidelines to do this:
 * Do not allow users to specify a Docker image
 	* If you need to do some sort of fork where "if data is X use Docker A, if data is Y use Docker B," consider writing two tasks, with each task differing only in name and what Docker image they are using. This will at least create a clear record as to which container was used, as the task name will be shown in logs. It's not a perfect solution, especially considering WDL lacks `if/else` logic, but if something goes wrong, this method may be a little easier to troubleshoot than simply printing the name of the Docker image being used to the logs.
@@ -343,7 +352,7 @@ Note that there are exceptions to these guidelines! For example, checker workflo
 
 You can also read [Dockstore's Best Practices for Secure and FAIR Workflows](https://docs.dockstore.org/en/stable/advanced-topics/best-practices/best-practices-secure-fair-workflows.html) for more tips.
 
-### Different versions of WDL
+## Different versions of WDL
 There are multiple different versions of WDL. **In general, most users will want to use WDL 1.0 formatting.** To support older WDLs, Cromwell (and by extension the Dockstore CLI) will accept valid WDLs that follow a draft specification. Versioning is performed in the first line of your WDL and is written in plaintext, such as
 
 ```
@@ -355,7 +364,7 @@ Per [the official WDL spec](https://github.com/openwdl/wdl/blob/main/versions/1.
 All WDL files within a given workflow must use the same version of WDL. If a WDL with "version 1.0" at the top (which will be parsed as 1.0) tries to call a WDL without an explicit version number (which will be parsed as draft-2), the process will fail even if the contents of the files otherwise should be compatible.
 
 
-#### Some functions have changed in in WDL 1.0
+### Some functions have changed in in WDL 1.0
 As you might expect, certain functions work differently or are removed altogether in different versions of WDL. One that is worth notice is sub(), as it was sometimes used in draft versions to coerce floats into integers. This is valid in draft-2, so if your WDL **does not** specify `version 1.0` at the top, the following would be a valid way to coerce the float `disk_size` into a integer:
 
 ```
@@ -365,10 +374,10 @@ disks: "local-disk " + sub(disk_size, "\\..*", "") + " HDD"
 However, this is invalid in WDL 1.0 and, if you are using Cromwell/womtool, will not pass the syntax check. To convert floats into integers, it is better to use `ceil()` as shown in [this recipe](#base-cloud-resources-requested-upon-size-of-input-files).
 
 
-#### Cromwell lags behind the current WDL spec
+### Cromwell lags behind the current WDL spec
 According to its git history, the WDL 1.1 spec was finalized around February 2021. As of my writing this (mid-July 2022), to my knowledge, Cromwell does not support WDL 1.1 nor is there a public roadmap for it picking up WDL 1.1 support. If you are writing a WDL for Terra, **do not** use WDL 1.1 features. If you are writing a workflow that must use a WDL 1.1 feature, consider using a different WDL executor which does support WDL 1.1, or asking on Stack Overflow or elsewhere for advice on creating a WDL 1.0-compatible workaround.
 
-### Variables in WDL: Explanation and Examples
+## Variables in WDL: Explanation and Examples
 A lot of issues that pop up when writing WDLs come down to the fact that a WDL involves many different sets of variables, and they are often written similarly. It is clearer to talk about this using chevron notation for task sections, so I'll discuss it in that context. (I recommend always using chevron notation anyway.) 
 
 *Note: WDL does not use phrases like "private task-level input variable" or any of the other names I am about to introduce on their spec. The 1.0 spec does not even have any hits for "private" if you search the document. In other words, there are no official name for these different kinds of variables. I am giving them names in hopes of making them easier to understand.*
@@ -404,19 +413,20 @@ workflow variable_examples {
 	}
 }
 ```
-#### Workflow-level inputs vs task-level inputs vs bash variables
+### Workflow-level inputs vs task-level inputs vs bash variables
 When running the workflow, the user needs to provide an array of strings for the workflow-level input variable `birds`. This variable is called as `chickens` in the `look_at_all_those_chickens` task. By setting the value of `birds`, the user is indirectly setting the value of `chickens`, because `chickens` equals `birds`. I call `birds` a *workflow-level input variable* and `chickens` a *task-level input variable*.
 
 In the `look_at_all_those_chickens` task's command section, we want to access the `chickens` variable. Because we are using chevron notation, we do so using a tilde and curly braces, resulting in `~{chickens}`. In that same line, we are creating a new variable, `chickenscopy`, to the value of `~{chicken}`. If you are using Cromwell, the task-level input variable `chickens` is defined before the command section of the task even executes, which you can see nested among Cromwell's output when you run this WDL, assuming `birds` is set to "goose noises":
 
 ```
-[2022-07-26 13:08:12,80] [info] BackgroundConfigAsyncJobExecutionActor [27ca62d3variable_examples.look_at_all_those_chickens:NA:1]: chickenscopy="goose noises"
+[2022-07-26 13:08:12,80] [info] BackgroundConfigAsyncJobExecutionActor [27ca62d3variable_examples.look_at_all_those_chickens:NA:1]:
+chickenscopy="goose noises"
 echo ${chickenscopy} >> out.txt
 ```
 
 Why is `~{chickens}` replaced with "goose noises" but not `${chickenscopy}`? Because this print is done before the task's command section executes, so `${chickenscopy}` has not actually been set yet.
 
-#### Variable scope pt 1
+### Variable scope pt 1
 Now, let's talk about scope. `chickenscopy` is only defined in the command section of a task, and by default, the command section of a task is written in bash. Therefore, `chickenscopy` is a bash variable. To access this bash variable in the next line, we use a dollar sign and curly braces, resulting in `${chickenscopy}` as our syntax. This is visually distinct from `~{chickens}`, which was defined outside this bash section, but can be referenced inside of it, because it is a task-level input variable. In fact, we can reference `chickens` in the task's output section, not just the task's command section. That means that this would also be valid:
 
 ```
@@ -425,12 +435,12 @@ Now, let's talk about scope. `chickenscopy` is only defined in the command secti
     }
 ```
 
-##### Side note: WDL's syntax inconsistencies in referencing a variable
+#### Side note: WDL's syntax inconsistencies in referencing a variable
 > "Hey, wait a minute! I have to reference `chickens` as `~{chickens}` inside a command section, but in the output section, I can just write `chickens`?!"
 
 Yes. It's inconsistent, I know. But that's how it works.
 
-#### Variable scope pt 2
+### Variable scope pt 2
 In the example above, `String out = chickens` is functionally equivalent to `String out = read_string("out.txt")` because out.txt is just `chickenscopy` and `chickenscopy` is just `chickens`. You might be wondering why even bother with the read_string() version at all. Well, let's say `chickens` and `chickenscopy` weren't actually equivalent. Let's say we do something in the command section to `chickenscopy` to make it something else, and we want our output to be `chickenscopy`.
 
 ```
@@ -452,7 +462,7 @@ task look_at_all_those_chickens {
 
 In this scenario, we have to use read_string() because we cannot access `${chickenscopy}` outside of this task's command section (and because `chickens`, which would access in the output section, doesn't equal what we actually want). That is to say, **a variable defined in a task's command section cannot be accessed outside that task's command section.** This can be quite a headache when trying to get outputs in WDL, which is why it is common to write outputs to a file and then leverage WDL's [read_string()](https://github.com/openwdl/wdl/blob/main/versions/1.0/SPEC.md#string-read_stringstringfile) or [read_int()](https://github.com/openwdl/wdl/blob/main/versions/1.0/SPEC.md#int-read_intstringfile) in a task's outputs section. That's what we're doing here. We cannot access `${chickenscopy}` directly, but we can access the contents of any file on the disk, so we can just create a file that has the contents of `${chickenscopy}`, then read that as a string. We set that as a *task-level output variable* called `out`.
 
-#### Private task-level variables
+### Private task-level variables
 So far we have:
 * Workflow-level input variable `birds`  
 * Task-level input variable `chickens`  
@@ -507,7 +517,8 @@ Both `disk_size` and `base_chicken` cannot be directly set by the user, but like
 `base_chicken` is referenced in the command section as if were an input variable. Like an input variable, when referenced in the command section, it needs to be referenced with a tilde and curly braces, ie, `~{base_chicken}`. (It should be noted that using basename() in this way isn't the only way to remove the full path and file extension from `chickens`. You could also use various bash programs such as sed to remove the extension in the task's command section.)
 
 
-## Quick tips: Variables
+# Quick tips
+## Variables
 ### Variables in filenames
 
 There are two different ways that you should represent a filename with a variable.
@@ -543,7 +554,7 @@ workflow indexABam {
 }
 ```
 
-## Quick tips: Command Section Syntax
+## Command section syntax
 ### Be careful with comments
 Because command sections of a WDL can interpret BASH commands, and BASH commands make use of the # symbol, womtool (and possibily other parsers) can misinterpret comments as syntax. This usually only happens if there are special characters in the comment; alphanumerics should work fine.
 
@@ -589,7 +600,7 @@ The command section of a WDL task can contain valid bash syntax, which often con
 A surprising number of common errors can be sidestepped by using chevron syntax, so it is worth trying should you have trouble with a command in WDL.
 
 
-## Quick tips: Runtime attributes
+## Runtime attributes
 ### Allow users to easily change runtime attributes
 A recipe in this document shows how to have the user set the docker container that a task executes in. You can use the same logic to allow the user to specify how much memory a task will use when run on the cloud, for instance, or whether or not preemptibles should be used if running on Google Cloud Compute specifically.
 
@@ -645,7 +656,7 @@ The [memory runtime attribute](https://cromwell.readthedocs.io/en/stable/Runtime
 * memory: "4000 MB"
 
 
-## Quick tips: Troubleshooting
+## Troubleshooting
 ### Use pipefail to catch errors early
 Towards the beginning of a command section within a task, it's good practice to include the following:
 
@@ -679,7 +690,7 @@ You can download womtool as its own jar file from [the Cromwell release page](ht
 Cromwell is what's used by Terra, but it isn't the only executor out there. If you would like something Python-based and/or less verbose, you may want to try [miniwdl](https://github.com/chanzuckerberg/miniwdl). Another Python-based executor is [Toil](https://toil.readthedocs.io/en/latest/running/wdl.html#wdl), although it should be noted its support for WDL is in alpha.
 
 
-## Quick Tips: Using Terra
+## Using Terra
 ### Use Firecloud API to help you debug
 #### Get a full error traceback
 You can use the following part of the Firecloud API to get a huge amount of information about your run. This will include all error codes associated with your WDL, which can be helpful, as Terra's current (it is July 2022 as I write this) UI does not show the full traceback when an error occurs.
@@ -734,5 +745,5 @@ gs://topmed_workflow_testing/topmed_aligner/reference_files/hg38/hs38DH.fa
 If you are having issues accessing controlled-access data on Terra, try refreshing your credentials. See Terra support on [linking Terra to external services](https://support.terra.bio/hc/en-us/articles/360038086332).
 
 
-## Concluding Thoughts
+# Concluding Thoughts
 If, when writing a WDL, you think to yourself "something about this workaround feels ridiculous," you are probably on the right track. Writing a WDL is not like writing in a standard programming language, because WDL is not designed to be a standard programming language.
