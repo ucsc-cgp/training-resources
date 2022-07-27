@@ -80,7 +80,4 @@ task check_merged_gds {
 		echo "foo"
 	>>>
 	
-	output {
-		File pruned_output = glob("*.gds")[0]
-	}
 }

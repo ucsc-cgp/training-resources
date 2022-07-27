@@ -87,8 +87,56 @@ task aggregate_list {
 
 You'll notice `big_size`, `other_size`, and `final_disk_size` are not defined in the input section, but it exists outside the command section too. When a variable is defined in this way, it is evaluated after the input variables are evaluated, but before the command section starts. They also cannot be accessed by the user. This means that someone running this workflow on Terra will have the option to define `some_big_file`, `some_other_file`, and `addl_disk`, but not `big_size`, `other_size`, and `final_disk_size`. In other words, `big_size`, `other_size`, and `final_disk_size` act somewhat like private variables. This can be useful, because it stops users from accidentally overwriting them with incorrect values.
 
+## How to loop through a WDL array in a task's for loop
+*See also:*
 
-## How to use `scatter` to do a task on every object in an array
+Referencing a WDL array in a task's command section is a common use case, but isn't very intutive. When called in a task's command section, a WDL array must be referenced using the `sep` keyword. This keyword tells your WDL executor what character should seperate each value.
+
+Take a look at [Patrick Magee](https://github.com/patmagee)'s example on [OpenWDL issue #500](https://github.com/openwdl/wdl/issues/500).
+
+<!---https://github.com/openwdl/wdl/issues/500#issuecomment-1079292129--->
+<!---also checked in grabbing_outputs.wdl--->
+```
+task A {
+    input {
+        Array[String] test = ["a","b","c","d"]
+    }
+
+    command {
+       for foo in ~{sep=" " test}
+       do 
+           echo $foo
+       done
+    }
+    output {
+        Array[String] out = read_lines(stdout())
+    }
+}
+```
+
+The input variable `test` is being referenced in bash. Thanks to `sep=" "` we know that each value of test is going to be seperated with a single space. So, the command section essentially translates to this:
+
+```
+for foo in a b c d
+	do
+	    echo $foo
+	done
+```
+
+...where `$foo` changes every iteration of the for loop. This isn't the only way to do this; I myself have written a lot of this kind of code, where I create a bash variable first, then loop through that bash variable. (In this example, `input_gds_files` is an input variable with type Array[File].)
+
+<!---from assoc-aggregate.wdl in UWGAC WDL collection--->
+```
+GDS_FILES=(~{sep=" " input_gds_files})
+	for GDS_FILE in ${GDS_FILES[@]};
+	do
+		cp ${GDS_FILE} .
+	done
+```
+
+
+## How to use `scatter` to do a WDL task on every object in an array
+*See also:*
 * "I want to do something on every file in an array."
 * "I want something like a for loop."
 * "I want to parallelize a process."
@@ -549,6 +597,10 @@ Both `disk_size` and `base_chicken` cannot be directly set by the user, but like
 
 # Quick tips
 ## Variables
+### Reserved keywords (don't use these as variable names)
+The WDL spec has a list of some reserved keywords that should not be used as variable names, but it does not include everything as of my writing this.
+
+
 ### Variables in filenames
 
 There are two different ways that you should represent a filename with a variable.
