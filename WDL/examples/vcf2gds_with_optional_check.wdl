@@ -1,6 +1,11 @@
 version 1.0
 
-workflow vcftogds {
+# This is a sample workflow that has been simplified to demonstrate
+# the inner workings of WDL. If you are looking for an actually
+# functional VCF to GDS converter, please see here:
+# https://dockstore.org/workflows/github.com/DataBiosphere/analysis_pipeline_WDL/vcf-to-gds-wdl
+
+workflow vcf2gds_with_optional_check {
 	input {
 		Array[File] vcf_files
 		Boolean check_gds = false

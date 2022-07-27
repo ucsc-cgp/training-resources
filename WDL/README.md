@@ -1,6 +1,6 @@
 # The WDL Library
 
-![photo of dog with glasses reading from a stack of books](images/dog_with_books.png "not quite an O'Reily cover but this will do")
+![stock photo of dog with glasses reading from a stack of books](images/dog_with_books.png "not quite an O'Reily cover but this will do")
 
 _Head chef: Ash O'Farrell (UC Santa Cruz)_
 
@@ -46,13 +46,23 @@ Examples in this document were checked using version 1.12.0 of the Dockstore CLI
 
 
 # Recipes
+## How to get an output of an unknown filename
+A challenging limitation of WDL is the fact that variables created within a task's command section cannot easily be passed out of that section. Sometimes, this isn't a problem, such as when an output file always the same filename, like here:
+
+```
+output {
+	File output = "my_cool_file.txt"
+}
+```
+
 ## How to scale cloud resources with size of input files
 There's no reason to request 100 GB of space from Google if you're just re-aligning a 300 MB cram file to the human genome. Instead of hardcoding a size for your tasks, it's always better to base the value on the size of one's inputs.
 
 However, this is problematic -- `size()` returns a float, but the disk runtime attribute must be an integer, and at first glance it may appear that WDL lacks a way to directly coerce floats into integers. While you could use some clever tricks involving strings to get around this, it's far easier and less error-prone to simply round up floats into integers using `ceil()`.
 
-Here's an example of using `ceil()` to round up the size of your inputs, then adding them together to generate a final value for disk size. The user can also specify a bigger value than 1 for `addl_disk` to add even more disk space on top.
+Here's an example of using `ceil()` to round up the size of your inputs, then adding them together to generate a final value for disk size. The user can also specify a bigger value than 1 for `addl_disk` to add even more disk space on top. See [scaling_cloud_resources.wdl](https://github.com/ucsc-cgp/training-resources/blob/wdl-library/WDL/examples/scaling_cloud_resources.wdl) for a full WDL.
 
+<!-- corresponds to scaling_cloud_resources.wdl-->
 ```
 task aggregate_list {
 	input {
@@ -90,6 +100,7 @@ WDL does not have loops in the sense that other programming languages do. If you
 
 Here is an example of a task that expects a single bam file and a reference genome.
 
+<!-- corresponds to simple_scatter.wdl-->
 ```
 version 1.0
 
@@ -109,10 +120,9 @@ task echo_one_bam {
 }
 ```
 
-
 But we want to be able to input an array of files into this workflow, not just one at a time. So, when writing the workflow portion of the WDL, `scatter` can be used to call just one file from an array of inputs.
 
-
+<!-- corresponds to simple_scatter.wdl-->
 ```
 workflow simple_scatter {
 	input {
@@ -138,7 +148,7 @@ One important way that this differs from your typical for loop is that `scatter`
 ## How to pass a scattered task's output to a non-scattered task
 It is relatively easy to pass a scattered task's output to a non-scattered one. Building off the previous recipe, we can call another task in much the same way we pass output from any other task. Note that `call report` is outside the context of scatter.
 
-
+<!-- corresponds to simple_scatter.wdl-->
 ```
 workflow simple_scatter {
 	input {
@@ -161,7 +171,6 @@ workflow simple_scatter {
 }
 ```
 
-
 As noted in the previous recipe, each instance of `echo_one_bam`returns a String. So, that means that the `report` task will be given an Array[String].
 
 
@@ -179,6 +188,7 @@ Now that we got that sorted, let's actually use it. As stated before, select_fir
 
 Let's take another look at [the scatter example from earlier on in this document](#using-the-scatter-function-to-perform-a-task-on-every-x-in-an-array), but add in another argument. This argument has the purpose of echoing the user's favorite animal.
 
+<!-- corresponds to simple_scatter.wdl-->
 ```
 workflow simple_scatter {
 	input {
@@ -203,6 +213,7 @@ workflow simple_scatter {
 
 Now, let's update our task to include `animal` as an input. Thanks to select_first(), `animal` will always be defined, even if `favoriteAnimal` is not. Because `animal` is always defined, we can set it as type String instead of the optional String? type.
 
+<!-- corresponds to simple_scatter.wdl-->
 ```
 task echo_one_bam {
 	input {
@@ -236,10 +247,11 @@ runtime {
 
 You can also use if statements to optionally call certain tasks. In the example below, if the user sets check_gds to `true`, then the check_gds_files task will be called. If not, the check_gds_files task will not be called. Because the actual workflow output is derived from the vcf2gds task, which will always run regardless of what `check_gds` is set to, `vcf2gds.gds_output` will always be defined (provided vcf2gds has an output called `gds_output` of course), so the workflow level output will always be valid.
 
+<!-- corresponds to vcf2gds_with_optional_check.wdl-->
 ```
 version 1.0
 
-workflow vcftogds {
+workflow vcf2gds_with_optional_check {
 	input {
 		Array[File] vcf_files
 		Boolean check_gds = false
@@ -271,9 +283,9 @@ What's the point of a workflow like this if the workflow-level output isn't infl
 
 This sort of if statement doesn't just have to be a boolean. In this example, the merge and check merged tasks are only called if more than one input file is put in by the user. The user does not directly set `num_gds_files`, but `num_gds_files` is calculated based on `gds_files`, which the user does set.
 
-
+<!-- corresponds to ldpruning_with_two_optional_steps.wdl-->
 ```
-workflow ldpruning {
+workflow ldpruning_with_two_optional_steps {
 	input {
 		Array[File] gds_files
 	}
