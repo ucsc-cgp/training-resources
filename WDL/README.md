@@ -541,6 +541,7 @@ workflow variable_examples {
 	}
 }
 ```
+
 ### Workflow-level inputs vs task-level inputs vs bash variables
 When running the workflow, the user needs to provide an array of strings for the workflow-level input variable `birds`. This variable is called as `chickens` in the `look_at_all_those_chickens` task. By setting the value of `birds`, the user is indirectly setting the value of `chickens`, because `chickens` equals `birds`. I call `birds` a *workflow-level input variable* and `chickens` a *task-level input variable*.
 
@@ -638,7 +639,7 @@ workflow variable_examples {
 }
 ```
 
-Both `disk_size` and `base_chicken` cannot be directly set by the user, but like task-level inputs, they can be used throughout the task. They are essentially *private task-level input variables*.
+Both `disk_size` and `base_chicken` cannot be directly set by the user, but like task-level inputs, they can be used throughout the task. They are essentially *private task-level input variables*. Note that the WDL spec calls them ["non-input declarations,"](https://github.com/openwdl/wdl/blob/69bbcb2cba54346b757b21b5b60d5d270f759eaf/versions/1.0/SPEC.md#non-input-declarations) not the term I'm using here. This begs the question as to whether or not they are truly input variables, but it really depends on your point-of-view: They can be input to a task's command section, but are not input by the user.
 
 `disk_size`is referenced in the runtime section as if it were an input variable. It does not use `$` or `~` or `{}` when referenced here. If it were referenced in the output section, the same concept would apply.
 
@@ -648,8 +649,14 @@ Both `disk_size` and `base_chicken` cannot be directly set by the user, but like
 # Quick tips
 ## Variables
 ### Reserved keywords (don't use these as variable names)
-The WDL spec has a list of some reserved keywords that should not be used as variable names, but it does not include everything as of my writing this.
+A non-exhaustive list:
+* command
+* output
+* file
+* task
+* workflow
 
+A name that contains any of these words plus additional characters is fine, such as `File output_file = "foo.txt"`
 
 ### Variables in filenames
 
