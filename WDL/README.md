@@ -49,9 +49,59 @@ Examples in this document were checked using version 1.12.0 of the Dockstore CLI
 ## How to get an output of an unknown filename
 A challenging limitation of WDL is the fact that variables created within a task's command section cannot easily be passed out of that section. Sometimes, this isn't a problem, such as when an output file always the same filename, like here:
 
+<!---grabbing_outputs.wdl--->
 ```
-output {
-	File output = "my_cool_file.txt"
+task consistent_output_filename {
+	input {
+		File gds
+	}
+
+	command <<<
+		touch my_cool_file.txt
+	>>>
+
+	output {
+		File out = "my_cool_file.txt"
+	}
+}
+```
+
+But there are scenarios where the name of your output file depends on the name of your input file. In that scenario, you can use the WDL built-in basename() function outside of the command section of your task. This will create a private variable that you can reference in your output section. (For more on variables, see [this lesson all about WDL variables](#variables-in-wdl-explanation-and-examples).)
+
+<!---grabbing_outputs.wdl--->
+```
+task output_matches_input_filename {
+	input {
+		File gds
+	}
+	String gds_basename = basename(gds)
+
+	command <<<
+		touch ~{gds_basename}
+	>>>
+
+	output {
+		File out = gds_basename
+	}
+}
+```
+
+If you don't know *anything* about the output file name except for its extension, you can use the WDL built-in glob() to return an array of files that match whatever regex pattern you specify. (I use the term regex loosely - glob() does not seem to support any regex besides the \* wildcard expression.) If only one file matches the expression, then the output will be an array with only one file in it, at index zero. Therefore, you can access the file at index zero, which makes your output variable a valid `File` instead of `Array[File]`.
+
+<!---grabbing_outputs.wdl--->
+```
+task only_know_output_extension {
+	input {
+		File gds
+	}
+
+	command <<<
+		touch $RANDOM.txt
+	>>>
+
+	output {
+		File out = glob("*.txt")[0]
+	}
 }
 ```
 
@@ -88,7 +138,7 @@ task aggregate_list {
 You'll notice `big_size`, `other_size`, and `final_disk_size` are not defined in the input section, but it exists outside the command section too. When a variable is defined in this way, it is evaluated after the input variables are evaluated, but before the command section starts. They also cannot be accessed by the user. This means that someone running this workflow on Terra will have the option to define `some_big_file`, `some_other_file`, and `addl_disk`, but not `big_size`, `other_size`, and `final_disk_size`. In other words, `big_size`, `other_size`, and `final_disk_size` act somewhat like private variables. This can be useful, because it stops users from accidentally overwriting them with incorrect values.
 
 ## How to loop through a WDL array in a task's for loop
-*See also:*
+*See also: [How to run an entire WDL task on the contents of a WDL array](#how-to-use-scatter-to-do-a-wdl-task-on-every-object-in-an-array), which also acts a bit like a for loop*
 
 Referencing a WDL array in a task's command section is a common use case, but isn't very intutive. When called in a task's command section, a WDL array must be referenced using the `sep` keyword. This keyword tells your WDL executor what character should seperate each value.
 
@@ -136,7 +186,7 @@ GDS_FILES=(~{sep=" " input_gds_files})
 
 
 ## How to use `scatter` to do a WDL task on every object in an array
-*See also:*
+*To loop within a single task's command section, see [this recipe](https://github.com/aofarrel/training-resources/tree/wdl-library/WDL#how-to-loop-through-a-wdl-array-in-a-tasks-for-loop) instead.*
 * "I want to do something on every file in an array."
 * "I want something like a for loop."
 * "I want to parallelize a process."
@@ -547,7 +597,7 @@ So far we have:
 * Bash variable named `chickenscopy`  
 * Task-level output variable `out`  
 
-There is still one more to talk about. Let's say that `chickens` was not actually a string, but a file with an extension, such as `goose noises.mp3`, ie
+There is still one more to talk about. Let's say that `chickens` was not actually a string, but a file with an extension, such as `goose noises.mp3`
 
 We want the name of the file, without the extension. Let's also we're running it on a backend that requires we define how much disk space the task needs. When our backend is Google Cloud based, such as Terra, the disk space argument represents a maximum; if you underestimate, your workflow will run out of disk space and fail. With that in mind, we want to make sure the amount of disk size we put in the task's runtime argument scales with the size of our inputs. We don't know how big of a file the user is going to input, so we can set a variable to that size. At the same time, we don't the user to think that variable is something they have to manually define, so we want to make that variable private. We can do this by sneaking it in *outside* the input and command sections of the task. In this little secret section, we can also call the WDL-builtin [basename()](https://github.com/openwdl/wdl/blob/main/versions/1.0/SPEC.md#string-basenamestring) to lop off anything before and after the string we're looking for. This is what we end up with:
 
