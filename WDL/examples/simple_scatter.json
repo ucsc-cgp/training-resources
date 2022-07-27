@@ -1,0 +1,4 @@
+{
+  "simple_scatter.inputBams": ["simple_scatter.json", "simple_scatter.wdl"],
+  "simple_scatter.refGenome": "goose noises.mp3"
+}

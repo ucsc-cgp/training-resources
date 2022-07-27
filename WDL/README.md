@@ -88,22 +88,23 @@ See also: https://support.terra.bio/hc/en-us/articles/360037128572-Scatter-Gathe
 
 WDL does not have loops in the sense that other programming languages do. If you want to perform a task on every file within a group of files, it is recommended to use `scatter`. This can be quite helpful if you are WDLizing something that normally only takes in one file at a time.
 
-For example, here is a task that takes in one bam or cram file, runs a function from goleft on it, and then extracts the coverage from the output. This singular file is called `inputBamOrCram.`
-
+Here is an example of a task that expects a single bam file and a reference genome.
 
 ```
-task getReadLengthAndCoverage {
+version 1.0
+
+task echo_one_bam {
 	input {
-		File inputBamOrCram
+		File inputBam
+		File refGenome
 	}
 	command <<<
-		goleft covstats -f ~{refGenome} ~{inputBamOrCram} >> this.txt
-		COVOUT=$(tail -n +2 this.txt)
-		read -a COVARRAY <<< "$COVOUT"
-		echo ${COVARRAY[0]} > thisCoverage
+		echo ~{inputBam} > somefile.txt
+		echo ~{refGenome} >> somefile.txt
 	>>>
+
 	output {
-		Int outCoverage = read_float("thisCoverage")
+		String filenames = read_string("somefile.txt")
 	}
 }
 ```
@@ -113,22 +114,25 @@ But we want to be able to input an array of files into this workflow, not just o
 
 
 ```
-workflow covstats {
+workflow simple_scatter {
 	input {
-		Array[File] inputBamsOrCrams
+		Array[File] inputBams
+		File refGenome
 	}
 
-	scatter(oneBamOrCram in inputBamsOrCrams) {
-		call getReadLengthAndCoverage as scatteredGetStats { 
+	scatter(oneBam in inputBams) {
+		call echo_one_bam as scattered_echo_one_bam { 
 			input:
-				inputBamOrCram = oneBamOrCram
+				inputBam = oneBam,
+				refGenome = refGenome
 		}
 	}
 }
 ```
 
+Additionally, refGenome is also present. It is not being scattered upon, so it is an input for every iteration. In other words, every iteration of echo_one_bam will receive a single File for inputBam (exactly which file changes every iteration), and a single File for refGenome (every iteration getting the same one).
 
-One important way that this differs from iteration is that `scatter` is parallized, while iteration via a for loop is not ([usually](https://stackoverflow.com/questions/29156704/what-is-a-parallel-for-loop-and-how-when-should-it-be-used#:~:text=The%20summing%20for%20loop%20can,such%20as%20separate%20CPU%20cores.)). For instance, let's say you had ten input files, but the second one was invalid in some way. If you were iterating through these files with a standard for loop in Python, then you would error out on that file and the remaining eight would not run. But using `scatter` in WDL is different -- all other instances of the task may complete. As such, `scatter` cannot replace for loops where order matters.
+One important way that this differs from your typical for loop is that `scatter` is parallized, while iteration via a for loop is not ([usually](https://stackoverflow.com/questions/29156704/what-is-a-parallel-for-loop-and-how-when-should-it-be-used#:~:text=The%20summing%20for%20loop%20can,such%20as%20separate%20CPU%20cores.)). For instance, let's say you had ten input files, but the second one was invalid in some way. If you were iterating through these files with a standard for loop in Python, then you would error out on that file and the remaining eight would not run. But using `scatter` in WDL is different -- all other instances of the task may complete. As such, `scatter` cannot replace for loops where order matters.
 
 
 ## How to pass a scattered task's output to a non-scattered task
@@ -136,26 +140,29 @@ It is relatively easy to pass a scattered task's output to a non-scattered one. 
 
 
 ```
-workflow covstats {
+workflow simple_scatter {
 	input {
-		Array[File] inputBamsOrCrams
+		Array[File] inputBams
+		File refGenome
 	}
 
-	scatter(oneBamOrCram in inputBamsOrCrams) {
-		call getReadLengthAndCoverage as scatteredGetStats { 
+	scatter(oneBam in inputBams) {
+		call echo_one_bam as scattered_echo_one_bam { 
 			input:
-				inputBamOrCram = oneBamOrCram
+				inputBam = oneBam,
+				refGenome = refGenome
 		}
 	}
+
 	call report {
 		input:
-			readLengths = scatteredGetStats.outCoverage
+			filenames = scattered_echo_one_bam.filenames
 	}
 }
 ```
 
 
-As noted in the previous recipe, each instance of `getReadLengthAndCoverage `returns a float. So, that means that the `report` task will be given an array of floats.
+As noted in the previous recipe, each instance of `echo_one_bam`returns a String. So, that means that the `report` task will be given an Array[String].
 
 
 ## How to use optional and default inputs with select_first
@@ -173,52 +180,53 @@ Now that we got that sorted, let's actually use it. As stated before, select_fir
 Let's take another look at [the scatter example from earlier on in this document](#using-the-scatter-function-to-perform-a-task-on-every-x-in-an-array), but add in another argument. This argument has the purpose of echoing the user's favorite animal.
 
 ```
-workflow covstats {
+workflow simple_scatter {
 	input {
-		Array[File] inputBamsOrCrams
+		Array[File] inputBams
+		File refGenome
 		String? favoriteAnimal
 	}
+
 	# Figure out which animal to use, fall back to dogs if none specified
 	String animal = select_first([favoriteAnimal, "dog"])
 
-	# Call covstats
-	scatter(oneBamOrCram in inputBamsOrCrams) {
-		call getReadLengthAndCoverage as scatteredGetStats { 
+	scatter(oneBam in inputBams) {
+		call echo_one_bam as scattered_echo_one_bam { 
 			input:
-				inputBamOrCram = oneBamOrCram,
+				inputBam = oneBam,
+				refGenome = refGenome,
 				animal = animal
 		}
 	}
 }
 ```
 
-Now, let's update our task to include `animal` as an input.
+Now, let's update our task to include `animal` as an input. Thanks to select_first(), `animal` will always be defined, even if `favoriteAnimal` is not. Because `animal` is always defined, we can set it as type String instead of the optional String? type.
 
 ```
-task getReadLengthAndCoverage {
+task echo_one_bam {
 	input {
-		File inputBamOrCram
+		File inputBam
+		File refGenome
 		String animal
 	}
 	command <<<
-		goleft covstats -f ~{refGenome} ~{inputBamOrCram} >> this.txt
-		COVOUT=$(tail -n +2 this.txt)
-		read -a COVARRAY <<< "$COVOUT"
-		echo ${COVARRAY[0]} > thisCoverage
-
+		echo ~{inputBam} > somefile.txt
+		echo ~{refGenome} >> somefile.txt
 		echo ~{animal}
 	>>>
+
 	output {
-		Int outCoverage = read_float("thisCoverage")
+		String filenames = read_string("somefile.txt")
 	}
 }
 ```
 
-If the user does not define `animal`, then `animal` will be undefined and `select_first()` will evaluate to "dog". If the user defines anything for `animal`, then whatever the user defined will be used. Beware, "bad" input will still take precedence; all that select_first() is looking at is whether or not something is defined!
+If the user does not define `favoriteAnimal`, then `favoriteAnimal` will be undefined and select_first() will evaluate to "dog", meaning that `animal` will evaluate to dog. If the user defines anything for `favoriteAnimal`, then whatever the user defined will be used. Beware, "bad" input will still take precedence; all that select_first() is looking at is whether or not something is defined!
 
 
 ## How to use if/else in WDL
-WDL allows for limited if/else reasoning when it comes to setting variables. You can use this to set runtime arguments in tasks, such as this:
+WDL allows for limited if/else reasoning when it comes to setting variables. You can use this to set runtime attributes in tasks, such as this:
 
 ```
 runtime {
@@ -226,9 +234,11 @@ runtime {
 }
 ```
 
-You can also use if statements to optionally call certain tasks. For example, if the user sets check_gds to `true`, then the check_gds_files task will be called. If not, the check_gds_files task will not be called. Because the actual workflow output is derived from the vcf2gds task, which will always run regardless of what `check_gds` is set to, `vcf2gds.gds_output` will always be defined (provided vcf2gds has an output called `gds_output` of course), so the workflow level output will always be valid.
+You can also use if statements to optionally call certain tasks. In the example below, if the user sets check_gds to `true`, then the check_gds_files task will be called. If not, the check_gds_files task will not be called. Because the actual workflow output is derived from the vcf2gds task, which will always run regardless of what `check_gds` is set to, `vcf2gds.gds_output` will always be defined (provided vcf2gds has an output called `gds_output` of course), so the workflow level output will always be valid.
 
 ```
+version 1.0
+
 workflow vcftogds {
 	input {
 		Array[File] vcf_files
@@ -256,9 +266,11 @@ workflow vcftogds {
 	}
 }
 ```
+
 What's the point of a workflow like this if the workflow-level output isn't influenced by check_gds_files? It doesn't need to be. If check_gds_files finds something wrong, it can simply throw an error, resulting in the workflow failing. More detailed results could be gleaned from log files from check_gds_files. Remember, if a workflow fails, task-level outputs are also saved.
 
 This sort of if statement doesn't just have to be a boolean. In this example, the merge and check merged tasks are only called if more than one input file is put in by the user. The user does not directly set `num_gds_files`, but `num_gds_files` is calculated based on `gds_files`, which the user does set.
+
 
 ```
 workflow ldpruning {
