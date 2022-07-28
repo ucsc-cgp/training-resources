@@ -487,7 +487,7 @@ There are multiple different versions of WDL. **In general, most users will want
 version 1.0
 ```
 
-Per [the official WDL spec](https://github.com/openwdl/wdl/blob/main/versions/1.0/SPEC.md#versioning), this first-line versioning must be used if a WDL file is intended to be parsed as anything except the second version of the draft (draft-2) specification. This specification is done at the top of the file with a comment. For simple WDLs, this is usually inconsequential, but it's good to get into the habit of versioning your WDLs as you will likely eventually want to use syntax not present in draft-2.
+Per [the official WDL spec](https://github.com/openwdl/wdl/blob/main/versions/1.0/SPEC.md#versioning), this first-line versioning must be used if a WDL file is intended to be parsed as anything except the second version of the draft (draft-2) specification. This specification is done at the top of the file. It's good to get into the habit of versioning your WDLs as you will likely eventually want to use syntax not present in draft-2.
 
 All WDL files within a given workflow must use the same version of WDL. If a WDL with "version 1.0" at the top (which will be parsed as 1.0) tries to call a WDL without an explicit version number (which will be parsed as draft-2), the process will fail even if the contents of the files otherwise should be compatible.
 
@@ -695,7 +695,7 @@ workflow indexABam {
 
 ## Command section syntax
 ### Be careful with comments
-Because command sections of a WDL can interpret BASH commands, and BASH commands make use of the # symbol, womtool (and possibily other parsers) can misinterpret comments as syntax. This usually only happens if there are special characters in the comment; alphanumerics should work fine.
+Because command sections of a WDL can interpret bash commands, and bash commands make use of the # symbol, womtool (and possibily other parsers) can misinterpret comments as syntax. This usually only happens if there are special characters in the comment; alphanumerics should work fine.
 
 This will work:
 
