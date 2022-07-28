@@ -1,0 +1,4 @@
+{
+  "vcf2gds_with_optional_check.vcf_files": ["simple_scatter.json", "simple_scatter.wdl"],
+  "vcf2gds_with_optional_check.check_gds": "True"
+}

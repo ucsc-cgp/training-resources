@@ -1,0 +1,3 @@
+{
+  "ldpruning_with_two_optional_steps.gds_files": ["fakedata/blank.gds", "fakedata/alsoblank.gds", "fakedata/stillblank.gds"]
+}
