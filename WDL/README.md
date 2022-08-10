@@ -334,8 +334,8 @@ task echo_one_bam {
 If the user does not define `favoriteAnimal`, then `favoriteAnimal` will be undefined and select_first() will evaluate to "dog", meaning that `animal` will evaluate to dog. If the user defines anything for `favoriteAnimal`, then whatever the user defined will be used. Beware, "bad" input will still take precedence; all that select_first() is looking at is whether or not something is defined!
 
 
-## How to use if/else in WDL
-WDL allows for limited if/else reasoning when it comes to setting variables. You can use this to set runtime attributes in tasks, such as this:
+## How to use if/else (conditionals) in WDL
+WDL allows for limited conditional reasoning when it comes to setting variables. You can use this to set runtime attributes in tasks, such as this:
 
 ```
 runtime {
@@ -377,6 +377,8 @@ workflow vcf2gds_with_optional_check {
 }
 ```
 
+(Side note: If we had wanted to check if check_gds were false instead of true, we would write `if(!check_gds)`. Use `!` to indicate NOT in WDL.)
+
 What's the point of a workflow like this if the workflow-level output isn't influenced by check_gds_files? It doesn't need to be. If check_gds_files finds something wrong, it can simply throw an error, resulting in the workflow failing. More detailed results could be gleaned from log files from check_gds_files. Remember, if a workflow fails, task-level outputs are also saved.
 
 This sort of if statement doesn't just have to be a boolean. In this example, the merge and check merged tasks are only called if more than one input file is put in by the user. The user does not directly set `num_gds_files`, but `num_gds_files` is calculated based on `gds_files`, which the user does set.
@@ -415,7 +417,57 @@ workflow ldpruning_with_two_optional_steps {
 }
 ```
 
-However, you cannot use else statements in this maybe-run-a-task-maybe-not manner. WDL lacks an "else" keyword for anything besides setting a variable's value. Also, WDL executors generally cannot tell if two if statements are mutually exclusive.
+However, you cannot use else statements in this maybe-run-a-task-maybe-not manner. WDL lacks an "else" keyword for anything besides setting a variable's value. If you need if/else, you're going to have to create mutually exclusive if-statements like this.
+
+```
+	if(check_gds) {
+		scatter(gds in vcf2gds.gds_output) {
+			call check_gds_files {
+				input:
+					gds = gds
+			}
+		}
+	}
+	if(!check_gds) {
+		scatter(gds in vcf2gds.gds_output) {
+			call something_else {
+				input:
+					gds = gds
+			}
+		}
+	}
+```
+
+But even though this workaround is sufficient for most use cases, keep in mind that WDL executors are unaware that mutually exclusive if statements are, well, mutually exclusive. Given that WDL executors try to prevent you from creating duplicated out, you generally shouldn't try to call the same task in two mutually exclusive if-blocks.
+
+One final note: `!` is not the same as "is not defined." Check if a variable is defined using `defined()`, and use `!` to determine if something is true or false.
+
+```
+workflow PrepareForAlignment {
+	input {
+		File fastq
+		File ref_genome
+		File? ref_genome_index
+        Boolean skip_trimming = false  # set to true if not Illumina
+	}
+	
+	if(!defined(ref_genome_index)) {
+		call index_ref {
+			input:
+				ref = ref_genome
+		}
+	}
+
+	if(!skip_trimming) {
+		call trimmomatic {
+			input:
+				fastq = fastq
+		}
+	}
+}
+```
+
+For further examples, [see Terra's documentation on conditionals](https://support.terra.bio/hc/en-us/articles/360037128512-Conditionals-if-else-).
 
 
 ## How to call a WDL with another WDL
@@ -741,7 +793,7 @@ A surprising number of common errors can be sidestepped by using chevron syntax,
 
 ## Runtime attributes
 ### Allow users to easily change runtime attributes
-A recipe in this document shows how to have the user set the docker container that a task executes in. You can use the same logic to allow the user to specify how much memory a task will use when run on the cloud, for instance, or whether or not preemptibles should be used if running on Google Cloud Compute specifically.
+A recipe in this document shows how to autoscale cloud storage size. You can use the same logic to allow the user to specify how much memory a task will use when run on the cloud, for instance, or whether or not preemptibles should be used if running on Google Cloud Compute specifically.
 
 It's generally a good idea to give users at least some control over memory and disk size. Also consider giving users the ability to use preemptibles -- your users may want to perform a quick run on downsampled test data, which could be a good use case for preemptibles. Alternatively, your users may consider running your WDL on more data than you've considered, which could preclude preemptibles on a task you'd otherwise consider to run within a reasonable timeframe.
 
