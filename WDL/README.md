@@ -440,7 +440,7 @@ However, you cannot use else statements in this maybe-run-a-task-maybe-not manne
 
 But even though this workaround is sufficient for most use cases, keep in mind that WDL executors are unaware that mutually exclusive if statements are, well, mutually exclusive. Given that WDL executors try to prevent you from creating duplicated out, you generally shouldn't try to call the same task in two mutually exclusive if-blocks.
 
-One final note: `!` is not the same as "is not defined." Check if a variable is defined using `defined()`, and use `!` to determine if something is true or false.
+One final note: `!` is not the same as "is not defined." Check if a variable is defined using [WDL-builtin defined()](https://github.com/openwdl/wdl/blob/main/versions/1.0/SPEC.md#boolean-defined), and use `!` to determine if something is true or false.
 
 ```
 workflow PrepareForAlignment {
@@ -448,7 +448,7 @@ workflow PrepareForAlignment {
 		File fastq
 		File ref_genome
 		File? ref_genome_index
-        Boolean skip_trimming = false  # set to true if not Illumina
+        	Boolean skip_trimming = false  # set to true if not Illumina
 	}
 	
 	if(!defined(ref_genome_index)) {
