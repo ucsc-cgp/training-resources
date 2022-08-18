@@ -188,10 +188,10 @@ for foo in a b c d
 <!---from assoc-aggregate.wdl in UWGAC WDL collection--->
 ```
 GDS_FILES=(~{sep=" " input_gds_files})
-	for GDS_FILE in ${GDS_FILES[@]};
-	do
-		cp ${GDS_FILE} .
-	done
+for GDS_FILE in ${GDS_FILES[@]};
+do
+	cp ${GDS_FILE} .
+done
 ```
 
 
