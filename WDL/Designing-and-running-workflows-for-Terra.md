@@ -1,4 +1,5 @@
 # Designing and Running Workflows For Terra: Tips & Tricks
+*Note: Some of this document rephrases information in the WDL library book, README.md*
 
 Those of you familiar with writing WDL workflows will feel right at home on Terra, as Terra uses the same program, Cromwell, as you likely use for your local WDL scripts. That being said there are a few differences once things move to the cloud. We've compiled a list of general advice to those who are new to writing workflows for Terra's compute envirnonment and to aid with troubleshooting. This assumes some familarity with WDL itself, so those new to the world of WDL may benefit more from the spec or other resources in this BYOT document.
 
@@ -26,12 +27,11 @@ Those of you familiar with writing WDL workflows will feel right at home on Terr
 ## Tips and Tricks: Data Access
 
 ### General DRS tips
+DRS is a GA4GH standard providing a cloud-agnostic method to access data in the cloud. For NIH cloud platform users (BioData Catalyst, AnVIL, etc.), it is currently used to access data hosted by the Gen3 platform. When data is imported to Terra from Gen3, you will see that genomic files are accessed via "drs://" (rather than "gs://").
 
-DRS is a standardized, cloud-agnostic method that is used to access data hosted by the Gen3 platform. When data is imported to Terra from Gen3, you will see that genomic files are accessed via "drs://" (rather than "gs://"). 
+Cromwell in Terra will automatically resolve DRS URIs for you ([assuming your credentials are up-to-date](#make-sure-your-credentials-are-current)), so most WDLs will be able to use DRS URIs without any additional changes. 
 
-Cromwell will automatically resolve DRS URIs for you (assuming your credentials are up-to-date, see below) but depending on how your inputs are set up, some changes might be necessary, such as if you're using symlinks. When working with DRS URIs, sometimes you will want to have your inputs be considered strings rather than file paths.
-
-[This diff on GitHub](https://github.com/DataBiosphere/topmed-workflow-variant-calling/pull/4/files) shows the changes that were needed to make an already existing WDL work with DRS URIs on Terra. Although it is a somewhat complicated example, it may be a helpful template for your own changes.
+However, depending on how your inputs are set up, some changes might be necessary, such as if you're using symlinks. When working with DRS URIs, sometimes you will want to have your inputs be considered strings rather than file paths.[This diff on GitHub](https://github.com/DataBiosphere/topmed-workflow-variant-calling/pull/4/files) shows the changes that were needed to make an already existing WDL work with DRS URIs on Terra. Although it is a somewhat complicated example, it may be a helpful template for your own changes.
 
 ### Use gs:// inputs
 Terra does not support https://storage.google.com inputs, therefore, if one of your input files is in a public Google Cloud bucket, use gs:// notation instead.
@@ -47,7 +47,6 @@ If you are having issues accessing controlled-access data on Terra, try refreshi
 Running WDL locally will ignore a WDL's values for runtime attributes that only apply to the cloud, such as `disks` or `memory`. That means if you had issues with those values, such as using incorrect syntax (see below), those issues will not raise an error on local runs, but will become problems when running on Terra. See the official spec for [pointers on the memory attribute](https://github.com/openwdl/wdl/blob/main/versions/1.0/SPEC.md#memory).
 
 ### Cromwell can handle preemptible VM interruptions for you
-
 If you include the runtime attribute `preemptible` in your WDL, you can specify the maximum number of times Terra will request a preemptible machine for a task before defaulting back to a non-preemptible machine. For instance, if your set `preemptible: 2`, your workflow will attempt a preembtible at first, and if that machine gets preempted, it will try again with a preemptible again, and if that second try is preempted, then it will use a non-preemptible. For advice on weighing the costs and benefits of preemptibles, see [Saving money with preemptibles: Risks and benefits](#saving-money-with-preemptibles-risks-and-benefits).
 
 ### Disks attribute must use integers

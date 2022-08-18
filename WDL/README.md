@@ -891,6 +891,7 @@ Cromwell is what's used by Terra, but it isn't the only executor out there. If y
 
 
 ## Using Terra
+[This has been moved to designing-and-running-workflows-for-Terra.md](https://github.com/ucsc-cgp/training-resources/blob/main/WDL/Designing-and-running-workflows-for-Terra.md)
 ### Use Firecloud API to help you debug
 #### Get a full error traceback
 You can use the following part of the Firecloud API to get a huge amount of information about your run. This will include all error codes associated with your WDL, which can be helpful, as Terra's current (it is July 2022 as I write this) UI does not show the full traceback when an error occurs.
@@ -916,33 +917,6 @@ curl -X GET "https://api.firecloud.org/api/workflows/v1/PUT-WORKFLOW-ID-HERE/met
 Note that you will need to [install gcloud and login with the same Google account that your workspace uses](https://cloud.google.com/sdk/docs/quickstarts), and you will need jq to parse the result. jq can be easily installed on Mac with `brew install jq`
 
 With this quick setup, you'll be able to check the WDL of previously run workflows, which can be helpful if you are running multiple versions of the same workflow to aid with debugging. To make this process more efficient, put a comment in the WDL itself explaining how each WDL differs.
-
-
-### General data access issues on Terra
-#### Using DRS URIs
-DRS is a GA4GH standard providing a cloud-agnostic method to access data in the cloud. For NIH cloud platform users (BioData Catalyst, AnVIL, etc.), it is currently used to access data hosted by the Gen3 platform. When data is imported to Terra from Gen3, you will see that genomic files are accessed via "drs://" (rather than "gs://").
-
-Cromwell in Terra will automatically resolve DRS URIs for you ([assuming your credentials are up-to-date](#make-sure-your-credentials-are-current)), so most WDLs will be able to use DRS URIs without any additional changes. 
-
-However, depending on how your inputs are set up, some changes might be necessary, such as if you're using symlinks. When working with DRS URIs, sometimes you will want to have your inputs be considered strings rather than file paths.[This diff on GitHub](https://github.com/DataBiosphere/topmed-workflow-variant-calling/pull/4/files) shows the changes that were needed to make an already existing WDL work with DRS URIs on Terra. Although it is a somewhat complicated example, it may be a helpful template for your own changes.
-
-
-#### Use gs rather than https inputs
-If one of your inputs is in a Google bucket that you otherwise have access to (such as Google's own public genomics bucket), access it on Terra using its gs:// form rather than its storage.google.com form. You can just replace https://storage.google.com inputs with gs:// to do so; the remainder of the address will be the same. For instance,
-
-```
-https://storage.google.com/topmed_workflow_testing/topmed_aligner/reference_files/hg38/hs38DH.fa
-```
-
-becomes
-
-```
-gs://topmed_workflow_testing/topmed_aligner/reference_files/hg38/hs38DH.fa
-```
-
-
-#### Make sure your credentials are current
-If you are having issues accessing controlled-access data on Terra, try refreshing your credentials. See Terra support on [linking Terra to external services](https://support.terra.bio/hc/en-us/articles/360038086332).
 
 
 # Concluding Thoughts
