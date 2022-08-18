@@ -135,7 +135,16 @@ task aggregate_list {
 }
 ```
 
-You'll notice `big_size`, `other_size`, and `final_disk_size` are not defined in the input section, but it exists outside the command section too. When a variable is defined in this way, it is evaluated after the input variables are evaluated, but before the command section starts. They also cannot be accessed by the user. This means that someone running this workflow on Terra will have the option to define `some_big_file`, `some_other_file`, and `addl_disk`, but not `big_size`, `other_size`, and `final_disk_size`. In other words, `big_size`, `other_size`, and `final_disk_size` act somewhat like private variables. This can be useful, because it stops users from accidentally overwriting them with incorrect values.
+You'll notice `big_size`, `other_size`, and `final_disk_size` are not defined in the input section, but it exists outside the command section too. When a variable is defined in this way, it is evaluated after the input variables are evaluated, but before the command section starts. They also cannot be accessed by the user. This means that someone running this workflow on Terra will have the option to define `some_big_file`, `some_other_file`, and `addl_disk`, but not `big_size`, `other_size`, and `final_disk_size`. In other words, `big_size`, `other_size`, and `final_disk_size` act somewhat like private variables. This can be useful, because it stops users from accidentally overwriting them with incorrect values. I wrote [a full explaination of WDL variables elsewhere in this document](#variables-in-wdl-explanation-and-examples), but if it's these weird not-input-not-command, kind-of-private variables in particular you care about, you may want to skip to [the "private task-level variables" section](#private-task-level-variables).
+
+### What about optional files?
+If one of the files you want to account for is optional (ie, has ? in its type declaration), then ceil(size()) on that file will return an Int? instead of an Int. This can cause several issues, so it's best to use select_first() so you can still end up with an Int one way or another.
+
+For example, let's say `some_other_file` was type File? instead of File. If `some_other_file` is defined, we want to set `other_size` to `ceil(size(some_other_file, "GB"))`, but if `some_other_file` is not defined, we want `other_size` to be zero. We can use select_first() for this, ending up with:
+
+`Int other_size = select_first([ceil(size(some_other_file, "GB")), 0])`
+
+[Click here](#how-to-use-optional-and-default-inputs-with-select_first) for more information on select_first().
 
 ## How to loop through a WDL array in a task's for loop
 *See also: [How to run an entire WDL task on the contents of a WDL array](#how-to-use-scatter-to-do-a-wdl-task-on-every-object-in-an-array), which also acts a bit like a for loop*
