@@ -3,21 +3,21 @@
 
 Those of you familiar with writing WDL workflows will feel right at home on Terra, as Terra uses the same program, Cromwell, as you likely use for your local WDL scripts. That being said there are a few differences once things move to the cloud. We've compiled a list of general advice to those who are new to writing workflows for Terra's compute envirnonment and to aid with troubleshooting. This assumes some familarity with WDL itself, so those new to the world of WDL may benefit more from the spec or other resources in this BYOT document.
 
-- [Helpful Resources](#helpful-resources)
-- [Tips and Tricks: Data Access](#tips-and-tricks-data-access)
-  * [General DRS tips](#general-drs-tips)
-  * [Use gs:// inputs](#use-gs-inputs)
-  * [Make sure your credentials are current](#make-sure-your-credentials-are-current)
-- [Tips and Tricks: Runtime Attributes](#tips-and-tricks-runtime-attributes)
-  * [Cromwell can handle preemptible VM interruptions for you](#Cromwell-can-handle-preemptible-VM-interruptions-for-you)
-  * [Disks attribute must use integers](#disks-attribute-must-use-integers)
-  * [Avoid using sub() to coerce floats into ints](#avoid-using-sub-to-coerce-floats-into-ints)
-- [Tips and Tricks: Efficiency](#tips-and-tricks-efficiency)
-  * [Saving money with preemptibles: Risks and benefits](#saving-money-with-preemptibles-risks-and-benefits)
-- [Tips and Tricks: Miscellanous](#tips-and-tricks-miscellanous)
-  * [Be careful with comments](#be-careful-with-comments)
-  * [Use the command line to view the WDL for any given Terra run](#use-the-command-line-to-view-the-wdl-for-any-given-terra-run)
-
+* [Helpful Resources](#helpful-resources)
+* [Tips and Tricks: Data Access](#tips-and-tricks--data-access)
+  + [General DRS tips](#general-drs-tips)
+  + [Use gs:// inputs](#use-gs----inputs)
+  + [Make sure your credentials are current](#make-sure-your-credentials-are-current)
+* [Tips and Tricks: Runtime Attributes](#tips-and-tricks--runtime-attributes)
+  + [Cromwell can handle preemptible VM interruptions for you](#cromwell-can-handle-preemptible-vm-interruptions-for-you)
+  + [Disks attribute must use integers](#disks-attribute-must-use-integers)
+  + [Avoid using sub() to coerce floats into ints](#avoid-using-sub---to-coerce-floats-into-ints)
+  + [Calculate size with strings](#calculate-size-with-strings)
+* [Tips and Tricks: Efficiency](#tips-and-tricks--efficiency)
+  + [Saving money with preemptibles: Risks and benefits](#saving-money-with-preemptibles--risks-and-benefits)
+* [Tips and Tricks: Use Firecloud API to help you debug](#tips-and-tricks--use-firecloud-api-to-help-you-debug)
+  + [Get a full error traceback](#get-a-full-error-traceback)
+  + [Download a WDL used on a Terra run to your local machine](#download-a-wdl-used-on-a-terra-run-to-your-local-machine)
 
 ## Helpful Resources
 * [Terra's WDL documentation resources](https://support.terra.bio/hc/en-us/sections/360007274612-WDL-Documentation)
