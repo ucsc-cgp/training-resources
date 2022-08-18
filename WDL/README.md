@@ -122,7 +122,7 @@ task aggregate_list {
 	}
 
 	Int big_size = ceil(size(some_big_file, "GB"))
-	Int other_size = ceil(size(some_big_file, "GB"))
+	Int other_size = ceil(size(some_other_file, "GB"))
 	Int final_disk_size = big_size + other_size + addl_disk
 
 	command <<<
