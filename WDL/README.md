@@ -892,31 +892,6 @@ Cromwell is what's used by Terra, but it isn't the only executor out there. If y
 
 ## Using Terra
 [This has been moved to designing-and-running-workflows-for-Terra.md](https://github.com/ucsc-cgp/training-resources/blob/main/WDL/Designing-and-running-workflows-for-Terra.md)
-### Use Firecloud API to help you debug
-#### Get a full error traceback
-You can use the following part of the Firecloud API to get a huge amount of information about your run. This will include all error codes associated with your WDL, which can be helpful, as Terra's current (it is July 2022 as I write this) UI does not show the full traceback when an error occurs.
-
-https://api.firecloud.org/#/CromIAM%20Workflows%20(for%20Job%20Manager)/get_api_workflows__version___id__metadata
-
-
-#### Download a WDL used on a Terra run to your local machine
-_Note: While this has been made somewhat obsolete by a change in Terra's UI, it may still be useful to power users who wish to check multiple submission's WDLs quickly, or if you wish to recover a WDL from a Terra run (such as if you deleted your local copy)._
-
-If you are developing a workflow and need to run multiple tests on Terra, you'll probably be updating your workflow a lot. When you go to run a workflow, you will be able to select the version -- release number or branches if imported from Dockstore, or snapshot if imported from the Broads Methods Repository. If you are running multiple versions of the same workflow, you might lose track of which run correlates to which WDL. While the WDL is now visible in the UI, if you prefer, you can extract the WDL once a workflow has finished using your local machine's command line.
-
-When you click the "view" button to bring up the job manager, take note of the ID in the top, not to be confused with the workspace-id or submission-id.
-
-![screenshot of Terra page to indicate where the ID is](images/terra_id.png)
-
-You can use this ID on your local machine's command line to display the WDL on stdout.
-
-```
-curl -X GET "https://api.firecloud.org/api/workflows/v1/PUT-WORKFLOW-ID-HERE/metadata" -H "accept: application/json" -H "Authorization: Bearer $(gcloud auth print-access-token)" | jq -r '.submittedFiles.workflow'
-```
-
-Note that you will need to [install gcloud and login with the same Google account that your workspace uses](https://cloud.google.com/sdk/docs/quickstarts), and you will need jq to parse the result. jq can be easily installed on Mac with `brew install jq`
-
-With this quick setup, you'll be able to check the WDL of previously run workflows, which can be helpful if you are running multiple versions of the same workflow to aid with debugging. To make this process more efficient, put a comment in the WDL itself explaining how each WDL differs.
 
 
 # Concluding Thoughts

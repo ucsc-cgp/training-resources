@@ -92,33 +92,27 @@ Cost should play a role in your consideration too: The cost of running a task on
 
 When writing WDL workflows, it is recommended to allow the user to enable or disable preemptibles for each task. This will allow the user to save money on test runs on smaller datasets that are take less time to compute and therefore are less likely to be preempted, while still having the option to avoid preemtibles if they need a task to complete as soon as possible and don't want to wait for it to possibly have to retry.
 
-## Tips and Tricks: Miscellanous
-### Be careful with comments
-Because command sections of a WDL can interpret BASH commands, and BASH commands make use of the # symbol, Cromwell can misinterpret comments as syntax. This usually only happens if there are special characters in the comment; alphanumerics should work fine.
+## Tips and Tricks: Use Firecloud API to help you debug
+### Get a full error traceback
+You can use the following part of the Firecloud API to get a huge amount of information about your run. This will include all error codes associated with your WDL, which can be helpful, as Terra's current (it is July 2022 as I write this) UI does not show the full traceback when an error occurs.
 
-✅ This will work:
-`command <<<`
-`    echo foo`
-`    #this is a valid comment`
-`>>>`
+https://api.firecloud.org/#/CromIAM%20Workflows%20(for%20Job%20Manager)/get_api_workflows__version___id__metadata
 
-❌ This will fail womtool:
-`command <<<`
-`    echo foo`
-`    #using <<<this syntax>>> for your command section is ~{very cool}!`
-`>>>`
 
-### Use the command line to view the WDL for any given Terra run
-If you are developing a workflow and need to run multiple tests on Terra, you'll probably be updating your workflow a lot. When you go to run a workflow, you will be able to select the version -- release number or branches if imported from Dockstore, or snapshot if imported from the Broads Methods Repository. But once you run the workflow, Terra's UI shows neither the WDL nor the version number on your workflow page. So, if you are running multiple versions of the same workflow, you might lose track of which run correlates to which WDL. Thankfully, you can extract the WDL once a workflow has finished using the command line.
+### Download a WDL used on a Terra run to your local machine
+_Note: While this has been made somewhat obsolete by a change in Terra's UI, it may still be useful to power users who wish to check multiple submission's WDLs quickly, or if you wish to recover a WDL from a Terra run (such as if you deleted your local copy)._
+If you are developing a workflow and need to run multiple tests on Terra, you'll probably be updating your workflow a lot. When you go to run a workflow, you will be able to select the version -- release number or branches if imported from Dockstore, or snapshot if imported from the Broads Methods Repository. If you are running multiple versions of the same workflow, you might lose track of which run correlates to which WDL. While the WDL is now visible in the UI, if you prefer, you can extract the WDL once a workflow has finished using your local machine's command line.
 
-When you click the "view" button to bring up the job manager, take note of the ID in the top, not to be confused with the workspace-id or submission-id.  
+When you click the "view" button to bring up the job manager, take note of the ID in the top, not to be confused with the workspace-id or submission-id.
 
-![Screenshot showing the ID of a workflow under the first heading in the Job Manager page](https://raw.githubusercontent.com/aofarrel/verbose-fiesta/master/Terra/Images/BDC_workflowTips.png)
+![screenshot of Terra page to indicate where the ID is](images/terra_id.png)
 
 You can use this ID on your local machine's command line to display the WDL on stdout.
 
-`curl -X GET "https://api.firecloud.org/api/workflows/v1/PUT-WORKFLOW-ID-HERE/metadata" -H "accept: application/json" -H "Authorization: Bearer $(gcloud auth print-access-token)" | jq -r '.submittedFiles.workflow'`
+```
+curl -X GET "https://api.firecloud.org/api/workflows/v1/PUT-WORKFLOW-ID-HERE/metadata" -H "accept: application/json" -H "Authorization: Bearer $(gcloud auth print-access-token)" | jq -r '.submittedFiles.workflow'
+```
 
 Note that you will need to [install gcloud and login with the same Google account that your workspace uses](https://cloud.google.com/sdk/docs/quickstarts), and you will need jq to parse the result. jq can be easily installed on Mac with `brew install jq`
 
-With this quick setup, you'll be able to check the WDL of previously run workflows in a flash. To make this process more efficient, put a comment in the WDL itself explaining its changes.
+With this quick setup, you'll be able to check the WDL of previously run workflows, which can be helpful if you are running multiple versions of the same workflow to aid with debugging. To make this process more efficient, put a comment in the WDL itself explaining how each WDL differs.
