@@ -122,7 +122,7 @@ task aggregate_list {
 	}
 
 	Int big_size = ceil(size(some_big_file, "GB"))
-	Int other_size = ceil(size(some_big_file, "GB"))
+	Int other_size = ceil(size(some_other_file, "GB"))
 	Int final_disk_size = big_size + other_size + addl_disk
 
 	command <<<
@@ -135,7 +135,16 @@ task aggregate_list {
 }
 ```
 
-You'll notice `big_size`, `other_size`, and `final_disk_size` are not defined in the input section, but it exists outside the command section too. When a variable is defined in this way, it is evaluated after the input variables are evaluated, but before the command section starts. They also cannot be accessed by the user. This means that someone running this workflow on Terra will have the option to define `some_big_file`, `some_other_file`, and `addl_disk`, but not `big_size`, `other_size`, and `final_disk_size`. In other words, `big_size`, `other_size`, and `final_disk_size` act somewhat like private variables. This can be useful, because it stops users from accidentally overwriting them with incorrect values.
+You'll notice `big_size`, `other_size`, and `final_disk_size` are not defined in the input section, but it exists outside the command section too. When a variable is defined in this way, it is evaluated after the input variables are evaluated, but before the command section starts. They also cannot be accessed by the user. This means that someone running this workflow on Terra will have the option to define `some_big_file`, `some_other_file`, and `addl_disk`, but not `big_size`, `other_size`, and `final_disk_size`. In other words, `big_size`, `other_size`, and `final_disk_size` act somewhat like private variables. This can be useful, because it stops users from accidentally overwriting them with incorrect values. I wrote [a full explaination of WDL variables elsewhere in this document](#variables-in-wdl-explanation-and-examples), but if it's these weird not-input-not-command, kind-of-private variables in particular you care about, you may want to skip to [the "private task-level variables" section](#private-task-level-variables).
+
+### What about optional files?
+If one of the files you want to account for is optional (ie, has ? in its type declaration), then ceil(size()) on that file will return an Int? instead of an Int. This can cause several issues, so it's best to use select_first() so you can still end up with an Int one way or another.
+
+For example, let's say `some_other_file` was type File? instead of File. If `some_other_file` is defined, we want to set `other_size` to `ceil(size(some_other_file, "GB"))`, but if `some_other_file` is not defined, we want `other_size` to be zero. We can use select_first() for this, ending up with:
+
+`Int other_size = select_first([ceil(size(some_other_file, "GB")), 0])`
+
+[Click here](#how-to-use-optional-and-default-inputs-with-select_first) for more information on select_first().
 
 ## How to loop through a WDL array in a task's for loop
 *See also: [How to run an entire WDL task on the contents of a WDL array](#how-to-use-scatter-to-do-a-wdl-task-on-every-object-in-an-array), which also acts a bit like a for loop*
@@ -882,58 +891,7 @@ Cromwell is what's used by Terra, but it isn't the only executor out there. If y
 
 
 ## Using Terra
-### Use Firecloud API to help you debug
-#### Get a full error traceback
-You can use the following part of the Firecloud API to get a huge amount of information about your run. This will include all error codes associated with your WDL, which can be helpful, as Terra's current (it is July 2022 as I write this) UI does not show the full traceback when an error occurs.
-
-https://api.firecloud.org/#/CromIAM%20Workflows%20(for%20Job%20Manager)/get_api_workflows__version___id__metadata
-
-
-#### Download a WDL used on a Terra run to your local machine
-_Note: While this has been made somewhat obsolete by a change in Terra's UI, it may still be useful to power users who wish to check multiple submission's WDLs quickly, or if you wish to recover a WDL from a Terra run (such as if you deleted your local copy)._
-
-If you are developing a workflow and need to run multiple tests on Terra, you'll probably be updating your workflow a lot. When you go to run a workflow, you will be able to select the version -- release number or branches if imported from Dockstore, or snapshot if imported from the Broads Methods Repository. If you are running multiple versions of the same workflow, you might lose track of which run correlates to which WDL. While the WDL is now visible in the UI, if you prefer, you can extract the WDL once a workflow has finished using your local machine's command line.
-
-When you click the "view" button to bring up the job manager, take note of the ID in the top, not to be confused with the workspace-id or submission-id.
-
-![screenshot of Terra page to indicate where the ID is](images/terra_id.png)
-
-You can use this ID on your local machine's command line to display the WDL on stdout.
-
-```
-curl -X GET "https://api.firecloud.org/api/workflows/v1/PUT-WORKFLOW-ID-HERE/metadata" -H "accept: application/json" -H "Authorization: Bearer $(gcloud auth print-access-token)" | jq -r '.submittedFiles.workflow'
-```
-
-Note that you will need to [install gcloud and login with the same Google account that your workspace uses](https://cloud.google.com/sdk/docs/quickstarts), and you will need jq to parse the result. jq can be easily installed on Mac with `brew install jq`
-
-With this quick setup, you'll be able to check the WDL of previously run workflows, which can be helpful if you are running multiple versions of the same workflow to aid with debugging. To make this process more efficient, put a comment in the WDL itself explaining how each WDL differs.
-
-
-### General data access issues on Terra
-#### Using DRS URIs
-DRS is a GA4GH standard providing a cloud-agnostic method to access data in the cloud. For NIH cloud platform users (BioData Catalyst, AnVIL, etc.), it is currently used to access data hosted by the Gen3 platform. When data is imported to Terra from Gen3, you will see that genomic files are accessed via "drs://" (rather than "gs://").
-
-Cromwell in Terra will automatically resolve DRS URIs for you ([assuming your credentials are up-to-date](#make-sure-your-credentials-are-current)), so most WDLs will be able to use DRS URIs without any additional changes. 
-
-However, depending on how your inputs are set up, some changes might be necessary, such as if you're using symlinks. When working with DRS URIs, sometimes you will want to have your inputs be considered strings rather than file paths.[This diff on GitHub](https://github.com/DataBiosphere/topmed-workflow-variant-calling/pull/4/files) shows the changes that were needed to make an already existing WDL work with DRS URIs on Terra. Although it is a somewhat complicated example, it may be a helpful template for your own changes.
-
-
-#### Use gs rather than https inputs
-If one of your inputs is in a Google bucket that you otherwise have access to (such as Google's own public genomics bucket), access it on Terra using its gs:// form rather than its storage.google.com form. You can just replace https://storage.google.com inputs with gs:// to do so; the remainder of the address will be the same. For instance,
-
-```
-https://storage.google.com/topmed_workflow_testing/topmed_aligner/reference_files/hg38/hs38DH.fa
-```
-
-becomes
-
-```
-gs://topmed_workflow_testing/topmed_aligner/reference_files/hg38/hs38DH.fa
-```
-
-
-#### Make sure your credentials are current
-If you are having issues accessing controlled-access data on Terra, try refreshing your credentials. See Terra support on [linking Terra to external services](https://support.terra.bio/hc/en-us/articles/360038086332).
+[This has been moved to designing-and-running-workflows-for-Terra.md](https://github.com/ucsc-cgp/training-resources/blob/main/WDL/Designing-and-running-workflows-for-Terra.md)
 
 
 # Concluding Thoughts
