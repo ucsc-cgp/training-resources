@@ -34,8 +34,9 @@ To contribute to this resource, open a pull request in the GitHub repo.
 
 
 ### Using WDL in the cloud
+* [Cloud-based runtime attributes (specific to Cromwell, but some are also used by miniwdl)](https://cromwell.readthedocs.io/en/stable/RuntimeAttributes/)
 * [Terra's WDL documentation resources](https://support.terra.bio/hc/en-us/sections/360007274612-WDL-Documentation)
-* [Cloud-based runtime attributes](https://cromwell.readthedocs.io/en/stable/RuntimeAttributes/)
+    * [Default runtime attributes when running on Terra (plus notes on what those actually mean)](https://support.terra.bio/hc/en-us/articles/360046944671-Default-runtime-attributes-for-workflow-submissions)
 * [Understanding and controlling cloud costs](https://support.terra.bio/hc/en-us/articles/360029748111-Understanding-and-controlling-cloud-costs-)
 
 
