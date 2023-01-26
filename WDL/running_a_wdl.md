@@ -8,7 +8,7 @@ These instructions assume you already have an account on [Terra](https://terra.b
 
 ### If the workflow is on Dockstore
 1. Go to the Dockstore entry of the workflow (as an example, [here's myco Dockstore entry](https://dockstore.org/workflows/github.com/aofarrel/myco/myco:main?tab=info))
-2. On the right hand side of the Dockstore entry, select Terra under the heading "Launch with" ![screenshot of launch with UI in Dockstore](./launch_with.png)
+2. On the right hand side of the Dockstore entry, select Terra under the heading "Launch with"
 3. Select which Terra workspace you wish to import into, or create a new one -- you'll then be taken to Terra
 4. In Terra, go to the workflow tab (it's on the top below the bright green header bar), select your workflow to run it
 
