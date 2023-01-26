@@ -23,7 +23,7 @@ These instructions assume you already have an account on [Terra](https://terra.b
 6. Select which Terra workspace you wish to import into, or create a new one -- you'll then be taken to Terra
 7. In Terra, go to the workflow tab, select your workflow to run it
 
-**Not that using the Broad Methods Repository will not transfer over git versioning, nor will your copy of the workflow keep up-to-date automatically.** If you want a new version of your workflow, you will need to copy-paste it into the BMR again.
+**Using the Broad Methods Repository will not transfer over git versioning, nor will your copy of the workflow keep up-to-date automatically.** If you want a new version of your workflow, you will need to copy-paste it into the BMR again.
 
 ### On a local machine
 You will need:
