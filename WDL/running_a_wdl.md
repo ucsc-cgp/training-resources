@@ -25,7 +25,7 @@ These instructions assume you already have an account on [Terra](https://terra.b
 
 **Using the Broad Methods Repository will not transfer over git versioning, nor will your copy of the workflow keep up-to-date automatically.** If you want a new version of your workflow, you will need to copy-paste it into the BMR again.
 
-### On a local machine
+## On a local machine
 You will need:
 * [miniwdl](https://github.com/chanzuckerberg/miniwdl) or [the Dockstore CLI](https://dockstore.org/quick-start) or [Cromwell](https://github.com/broadinstitute/cromwell)
 * Python 3 if you're using miniwdl, or Java 11 (OpenJDK recommended) if using Dockstore CLI/Cromwell
@@ -35,17 +35,17 @@ You will need:
 * A JSON file that describes your inputs -- if any of them are files, use relative (to the workdir you will be running from) paths
 * (Macs only) An overriden `TMPDIR` environment variable (e.g. `export TMPDIR=/whatever`) to prevent Docker shenanigans
 
-#### miniwdl
+### miniwdl
 `miniwdl run your_workflow.wdl -i your_inputs.json`
 
 miniwdl, unlike Cromwell, does not copy input files by default. If your WDL modifies input files such as trying to `mv` them, you **must** use the `--copy-input-files` option, or else you will get "device or resource busy" errors.
 
-#### Cromwell
+### Cromwell
 `java -jar /Applications/cromwell-xx.jar run your_workflow.wdl -i your_inputs.json`
 
 Cromwell, unlike miniwdl, does not handle resouces on local backends very well by default. Cromwell's default behavior causes it to attempt to run multiple tasks/multiple instances of scattered tasks at the same time. This tends to cause tasks getting sigkilled, or for the Docker daemon to stop responding entirely. If you are running a WDL that uses scattered tasks, it is highly recommend to [follow these instructions to make Cromwell/the Dockstore CLI only do one thing at a time](https://docs.dockstore.org/en/stable/advanced-topics/dockstore-cli/local-cromwell-config.html?highlight=cromwell).
 
-#### Dockstore CLI
+### Dockstore CLI
 The Dockstore CLI wraps Cromwell, so most Cromwell caveats and instructions apply to it too. However, the Dockstore CLI does add the ability to localize input files from a Google bucket using gs:// URIs, and can run WDLs directly from Dockstore.
 
 Running a local WDL:
@@ -59,5 +59,5 @@ Dockstore entry names are sometimes GitHub URLs, for example:
 
 You can use `--wdl-output-target` to put your workflow outputs into a remote path, such as an S3 bucket.
 
-### On an HPC
+## On an HPC
 Many (not all) institutes do not allow Docker to run on their HPC systems for security reasons. Strictly speaking, [there are ways](https://docs.dockstore.org/en/stable/advanced-topics/docker-alternatives.html) to get around this limitation, but if you can run your WDL on a system that supports Docker, you have a greater chance of things working correctly.
