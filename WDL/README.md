@@ -31,6 +31,7 @@ To contribute to this resource, open a pull request in the GitHub repo.
 * [miniwdl's WDL tips](https://miniwdl.readthedocs.io/en/latest/runner_advanced.html)
 * [OpenWDL](https://openwdl.org/):
     * [OpenWDL GitHub Issues](https://github.com/openwdl/wdl) 
+* [BioWDL style guide](https://biowdl.github.io/styleGuidelines.html) -- note that some of my examples deviate from this due to my love affair with the tab key
 
 
 ### Using WDL in the cloud
@@ -188,10 +189,10 @@ for foo in a b c d
 <!---from assoc-aggregate.wdl in UWGAC WDL collection--->
 ```
 GDS_FILES=(~{sep=" " input_gds_files})
-	for GDS_FILE in ${GDS_FILES[@]};
-	do
-		cp ${GDS_FILE} .
-	done
+for GDS_FILE in ${GDS_FILES[@]};
+do
+	cp ${GDS_FILE} .
+done
 ```
 
 
@@ -858,6 +859,11 @@ The [memory runtime attribute](https://cromwell.readthedocs.io/en/stable/Runtime
 
 
 ## Troubleshooting
+### Mind your indentation
+Like many programming languages that are not Python, identation in WDL is technically more of a best practice then a hard-and-fast rule. That being said, it's good to be consistent with it, and there are some errors than can occur if you do it carelessly.
+
+Although it is technically against [some style guides](https://biowdl.github.io/styleGuidelines.html), you can use tabs for indentation in your WDL. That being said, you cannot mix tab and spaces in the same WDL. Furthermore, if you are using Cromwell, input JSONs cannot be indented with tabs -- spaces are, for those JSONs, a hard requirement. You can, however, have you WDL indented with tabs and your input JSONs indented with spaces.
+
 ### Use pipefail to catch errors early
 Towards the beginning of a command section within a task, it's good practice to include the following:
 
