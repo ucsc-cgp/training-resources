@@ -28,13 +28,16 @@ If you use Dockstore, and the author of the workflow has set up the repo to auto
 ## On a local machine
 You will need:
 * [miniwdl](https://github.com/chanzuckerberg/miniwdl) or [the Dockstore CLI](https://dockstore.org/quick-start) or [Cromwell](https://github.com/broadinstitute/cromwell)
-* Python 3 if you're using miniwdl, or Java 11 (OpenJDK recommended) if using Dockstore CLI/Cromwell
-* Docker Engine or Docker Desktop
-  * if you are on a Linux machine, it is advised *not* to use Docker Desktop -- use Docker Engine instead
+* Python 3 if you're using miniwdl, or Java 21 (OpenJDK recommended) if using Dockstore CLI/Cromwell
+* Docker
+  * Linux: use Docker Engine instead of Docker Desktop
+  * Mac OS: Docker Desktop should be fine
 * The WDL file (optional if using the Dockstore CLI and the WDL is on Dockstore)
-* A JSON file that describes your inputs -- if any of them are files, use relative (to the workdir you will be running from) paths
+* A JSON file that describes your inputs
 
 In rare scenarios, Mac users may need to manually override `TMPDIR` (e.g. `export TMPDIR=/whatever`) to prevent Docker shenanigans.
+
+Be aware that if you are using an ARM machine, such as most Macbooks made after 2020, you may run into incompatibilities with WDL workflows that call upon Docker images that were compiled for x86. As of 2026, Rosetta has smoothed out most issues, but there are some incompatibilities (such as the non-lts version of the polars Python package).
 
 ### miniwdl
 `miniwdl run your_workflow.wdl -i your_inputs.json`
