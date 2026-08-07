@@ -7,7 +7,7 @@ You can use the Terra webservice to easily run WDL workflows on GCP. You can als
 These instructions assume you already have an account on [Terra](https://terra.bio/) and [a billing project set up](https://support.terra.bio/hc/en-us/articles/360026182251-How-to-set-up-billing-in-Terra).
 
 ### If the workflow is on Dockstore
-1. Go to the Dockstore entry of the workflow (as an example, [here's myco Dockstore entry](https://dockstore.org/workflows/github.com/aofarrel/myco/myco:main?tab=info))
+1. Go to the Dockstore entry of the workflow (as an example, [here's myco_raw's Dockstore entry](https://dockstore.org/workflows/github.com/aofarrel/myco/myco_raw))
 2. On the right hand side of the Dockstore entry, select Terra under the heading "Launch with"
 3. Select which Terra workspace you wish to import into, or create a new one -- you'll then be taken to Terra
 4. In Terra, go to the workflow tab (it's on the top below the bright green header bar), select your workflow to run it
